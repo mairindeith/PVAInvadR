@@ -1,0 +1,271 @@
+#' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
+#'
+#' @param pva.params A list of population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the `pva_template()` and `load_pva_parameters()` functions.
+#' @return pva A list of PVA outputs, including calculated parameters (`phie`:
+#'  unfished eggs per recruit, `R.A` and `R.B`: alpha and beta paramters for a
+#'  Beverton-Holt recruitment function, `Rinit`: initial recruitment,
+#' `amat`: age at maturity to differentiate adults and sub-adults,
+#' `A.s`: maximum survival in each stanza, and
+#' `B.s`: carrying capacity parameter for each stanza)
+#' and PVA-generated calculations for each iteration of the simulation
+#' (`N1`: initial population size per simulation,
+#'
+#' )
+#' @examples
+#' load_pva_parameters('~/Documents/PVA_Examples/filledin_parameter_template.csv')
+
+PVA <- function(pva.params, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
+  ### isolate({
+  start <- Sys.time()
+  cat("Calculating population projections ...\n")
+  # controls is a list including number of time-steps (nT), number of ages (in time-steps) (A),
+  #   number of juvenile stanzas (nS), age at recruitment (AR),
+  #   and the number of simulations (n.sim)
+  # parameters is a list of all parameters
+  #if(!is.null(input.params)){
+  #  inits <- input.params
+  #}
+  if(!is.null(custom.inits)){
+    inits <- custom.inits
+  }
+  AR <- inits$AR
+  A <- inits$A
+  dt <- inits$dt
+  R0 <- inits$R0.vec
+  age <- inits$age
+  la <- inits$la
+  wa <- inits$wa
+  spn <- inits$spn
+  fec <- inits$fec
+  mat <- inits$mat
+  Sa <- inits$Sa
+  lx <- inits$lx
+  sel <- inits$sel
+  phie <- inits$phie
+  R.A <- inits$R.A
+  R.B <- inits$R.B
+  A.s <- inits$A.s
+  B.s <- inits$B.s
+  can.a <- inits$can.a
+  can.b <- inits$can.b
+  M1 <- inits$M1
+  Sa.M <- inits$Sa.M
+  Ct <- inits$Ct
+  Nt <- inits$Nt
+  Et <- inits$Et
+  nest <- inits$nest
+
+  nT <- inits$nT                   # number of time-steps
+  nS <- input$nS                   # number of pre-recruit stanzas
+  n.sim <- input$n.sim             # number of simulations
+  samp.A <- vector()               # time-step within a year that each gear is fished
+  r <- input$r                     # discounting rate = future generation discount factor
+  G <- input$G                     # generation time (years)
+  U.R <- vector()                  # proportion of pre-recruited animals removed per gear
+  U.A <- vector()                  # proportion of recruited animals removed per gear
+  q.R <- vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
+  q.A <- vector()                  # catchability of gear used to remove recruited animals
+  n.gear <- input$n.gear           # number of capture gears applied to recruited animals
+  t.start.R <- vector()            # time-step when sampling begins for each pre-recruit stanza
+  t.start.A <- vector()            # time-step when sampling begins for each gear used on recruited animals
+  E.R <- vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
+  E.A <- vector()                  # effort per time-step used to remove recruited animals
+  v.a <- vector()                  # Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.b <- vector()                  # Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  v.c <- vector()                  # Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.d <- vector()                  # Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  C.f.R <- vector()
+  C.f.A <- vector()
+  C.E.R <- vector()
+  C.E.A <- vector()
+  for(i in 1:nS){
+    U.R[i] <- eval(parse(text=paste0("input$UR",i)))
+    C.f.R[i] <- eval(parse(text=paste0("input$C.f.R",i)))
+    C.E.R[i] <- eval(parse(text=paste0("input$C.E.R",i)))
+    t.start.R[i] <- eval(parse(text=paste0("input$t.start.R",i)))
+    E.R[i] <- eval(parse(text=paste0("input$E.R",i)))
+    #      print("-t.start.R-")
+    #      t.start.R[i] <- eval(parse(text=paste0("tmp.input$t.start.R",i)))
+    #      print(t.start.R[i])
+    #      print("-E.R-")
+    #      E.R[i] <- eval(parse(text=paste0("tmp.input$E.R",i)))
+  }
+  for(i in 1:n.gear){
+    U.A[i] <- eval(parse(text=paste0("input$UA",i)))
+    C.f.A[i] <- eval(parse(text=paste0("input$C.f.A",i)))
+    C.E.A[i] <- eval(parse(text=paste0("input$C.E.A",i)))
+    v.a[i] <- eval(parse(text=paste0("input$v.a",i)))
+    v.b[i] <- eval(parse(text=paste0("input$v.b",i)))
+    v.c[i] <- eval(parse(text=paste0("input$v.c",i)))
+    v.d[i] <- eval(parse(text=paste0("input$v.d",i)))
+    t.start.A[i] <- eval(parse(text=paste0("input$t.start.A",i)))
+    samp.A[i] <- eval(parse(text=paste0("input$sampA",i)))*dt
+    E.A[i] <- eval(parse(text=paste0("input$E.A",i)))
+  }
+
+  #!# How to deal with these?
+  reck <- input$reck             # recruitment compensation ratio
+  p.can <- input$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
+  K <- input$K                   # von Bertalanffy metabolic parameter
+  afec <- input$afec             # slope of fecundity-weight relationship
+  Wmat <- input$Wmat             # weight at maturity
+  t.spn <- input$t.spn           # range of time of year when spawning occurs
+  V1 <- input$V1                 # initial vulnerable abundance (used to create initial population)
+  cann.a <- input$cann.a         # age at which cannibalism on pre-recruits begins
+  bet <- input$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
+  sd.S <- input$sd.S             # standard deviation of environmental effect on survival
+
+  # If alternative values given to PVA function, use these
+  if(!is.null(input.params)){
+    for(p in names(input.params)){
+      var.p <- get(p)
+      pInd <- which(!is.na(input.params[[p]]))
+      for(i in pInd){
+        #!# ASSIGN DOESN'T WORK ON VECTORS YUCK
+        #          assign(x=paste0(p,"[",i,"]"), value = input.params[[p]][[i]])
+        #          print(paste0(p,"[",i,"]"))
+        var.p[i] <- input.params[[p]][[i]]
+        assign(p,var.p)
+      }
+    }
+  }
+
+  if(!is.null(sens.params)){
+    # Skip modification of parameters if these are already in inits
+    if(sens.params %in% names(inits) | sens.params %in% c("Bs","Ms")){
+      print("Pass")
+    } else {
+      stopifnot(!is.null(sens.pcent))
+      o.value <- get(sens.params)
+      new.val <- o.value*sens.pcent
+      assign(paste0(sens.params), new.val)
+    }
+  }
+
+  U.R <- pmin(U.R,0.999999999)
+  U.A <- pmin(U.A,0.999999999)
+  q.R <- -log(1-U.R)
+  q.A <- -log(1-U.A)*V1^bet
+
+  W.st <- rnorm(nT*n.sim,0,sd.S)
+  anom <- matrix(data=exp(W.st),nrow=nT,ncol=n.sim)              # survival anomolies for each stanza
+  go.R <- matrix(rep(0,nT*nS),nrow=nS)
+  for(i in 1:nS)
+    go.R[i,t.start.R[i]:nT] <- 1
+  go.A <- matrix(rep(0,nT*n.gear),nrow=n.gear)
+  for(i in 1:n.gear)
+    go.A[i,t.start.A[i]:nT] <- 1
+
+  # dynamics for subsequent years
+  for(t in 2:nT){
+    N.st <- matrix(nrow=nS+1,ncol=n.sim)    # numbers surviving through each stanza in a year
+    Ct.st <- matrix(nrow=nS,ncol=n.sim)
+    N.st[1,] <- Et[t-1,]
+    V <- colSums(Nt[t-1,(cann.a/dt):A,])
+    M0.t <- sweep(can.b,MARGIN=2,V,'*')
+    M0.t <- sweep(M0.t,MARGIN=1,can.a,'+')  # density independent variable
+    B.st <- M1/M0.t*(1-exp(-M0.t))              # density dependent variable
+    for(st in 1:nS){
+      Ct.st[st,] <- N.st[st,]*(1-exp(-E.R[st]*q.R[st]*go.R[st,t]))
+      N.st[st+1,] <- rbinom(n.sim,round(pmax(0,N.st[st,]),0),
+                            pmin(exp(-M0.t[st,]-E.R[st]*q.R[st]*go.R[st,t])*anom[t,]/
+                                   (1+B.st[st,]*N.st[st,]),1))
+    }
+    Ct[t,1:nS] <- rowSums(Ct.st)
+    Nt[t,AR,] <- N.st[nS+1,]                # numbers surviving through all stanzas become recruits to the population
+
+    Ct.A <- array(dim=c(n.gear,A-AR+1,n.sim))
+    Ft.A <- list()
+    Vt <- colSums(Nt[t-1,AR:A,])
+    for(i in 1:n.gear){
+      q.N <- q.A[i]*pmax(1,Vt)^(-bet)
+      ifelse(t*dt-as.integer(t*dt)==samp.A[i],
+      #        if(t<16) cat(t," gear ",i,"\nq.A",q.A[i],"\nq.N",q.N[1],"\nE.A",E.A[i],"\ngo.A",go.A[i,t],"\n")
+             Ft.A[[i]] <- go.A[i,t]*(E.A[i]*sel[i,] %o% q.N),
+             Ft.A[[i]] <- go.A[i,t]*matrix(rep(0,(A-AR+1)*n.sim),nrow=A-AR+1,ncol=n.sim))
+    }
+    Ft <- Reduce('+',Ft.A)
+    Zt <- Ft - log(Sa.M)
+    for(i in 1:n.gear){
+      Ct[t,nS+i] <- sum(Nt[t-1,AR:A,] * Ft.A[[i]]/Zt * ( 1 - exp( -Zt)))
+    }
+#      if(t<16) cat(t," F\n",Ft[,1],"\nZt",Zt[,1],"\nSa",exp(-Zt[1:(A-AR),1]),"\n")
+    Nt[t,(AR+1):A,] <- matrix(rbinom((A-AR)*n.sim,Nt[t-1,AR:(A-1),],exp(-Zt[1:(A-AR),])),ncol=n.sim)
+    pairs <- matrix(as.integer(Nt[t,AR:A,]/2),ncol=n.sim)
+    Et[t,] <- as.integer(colSums(sweep(pairs,MARGIN=1,fec*spn,'*')))
+    nest[t,] <- as.integer(colSums(sweep(pairs,MARGIN=1,mat*spn,'*')))
+  }
+  # probabilities of extirpation
+  p.extinct.50 <- NA
+  p.extinct.100 <- NA
+  p.extinct.200 <- NA
+  stps <- as.integer(nT/c(4,2,1))
+  p.extinct <- sapply(1:nT, function(ii)
+    length(which(colSums(Nt[ii,,],na.rm=TRUE)==0))/n.sim) ## calculate p.extinct by time-step
+  if( nT >= stps[1] ) p.extinct.50 <- p.extinct[stps[1]]     # probability of extinction in 50 time-steps
+  if( nT >= stps[2] ) p.extinct.100 <- p.extinct[stps[2]]  # probability of extinction in 100 time-steps
+  if( nT >= stps[3] ) p.extinct.200 <- p.extinct[stps[3]]  # probability of extinction in 200 time-steps
+  t.extinct <- min(which(p.extinct==1),nT)
+  nyrs <- nT*dt
+  Nt[is.na(Nt)]<-0
+  y.extinct <- sapply(seq(1/dt,nT,1/dt),function(ii)
+    length(which(colSums(Nt[ii,,])==0)))
+  y.extinct[2:nyrs] <- y.extinct[2:nyrs]-(y.extinct[1:(nyrs-1)])
+  sum.extinct <- sum(y.extinct)
+  y.extinct[nyrs] <- n.sim-sum.extinct
+  if(is.na(sum.extinct)) y.extinct[nyrs]<-n.sim
+  if(sum(y.extinct)<n.sim)y.extinct[nyrs]<-y.extinct[nyrs]+n.sim-sum(y.extinct)
+  yext.seq <- rep(1:nyrs,y.extinct)
+  y.extinct <- y.extinct / n.sim
+
+  # numbers remaining
+  NT <- quantile(colSums(Nt[nT,,]),probs=c(0.025,0.5,0.975))
+
+  # costs of removal
+  x.R <- rep(0,length(q.R))
+  x.A <- rep(0,length(q.A))
+  x.R[which(E.R>0)] <- 1
+  x.A[which(E.A>0)] <- 1
+  cost.1 <- sum(E.R*C.E.R) + sum(C.f.R[x.R]) +
+    sum(E.A*C.E.A) + sum(C.f.A[x.A])
+  y.ext <- t.extinct*dt
+  cost.T <- mean(cost.1*(1:nyrs)*y.extinct)
+  t.st <- (t.start.R[1]-1)*dt+1
+  tseq <- (t.start.R[1]*dt):y.ext
+  d <- 1/(1+r)
+  df <- d
+  NPV <- vector()
+  for(i in 1:n.sim){
+    NPV[i] <- cost.1*sum(d^(t.st:yext.seq[i])+(df^(t.st:yext.seq[i]))/G)
+  }
+  E.NPV <- mean(NPV)
+
+  runtime <- Sys.time()-start
+  print(runtime)
+
+  out <- list()
+  out$phie <- phie
+  out$R.A <- R.A
+  out$R.B <- R.B
+  out$A.s <- A.s
+  out$B.s <- B.s
+  out$Nt <- Nt
+  out$Et <- Et
+  out$nest <- nest
+  out$Vfin <- (Nt[nT,AR:A,])
+  out$p.extinct <- p.extinct
+  out$p.extinct.50 <- p.extinct.50
+  out$p.extinct.100 <- p.extinct.100
+  out$p.extinct.200 <- p.extinct.200
+  out$t.extinct <- t.extinct
+  out$yext.seq <- yext.seq
+  out$cost.1 <- cost.1
+  out$cost.T <- cost.T
+  out$NPV <- NPV
+  out$E.NPV <- E.NPV
+  out$NT <- NT
+  out$runtime <- runtime
+  gc()
+  return(out)
+### })
+}
