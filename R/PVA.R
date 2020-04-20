@@ -1,6 +1,8 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
 #'
-#' @param pva.params A list of population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the `pva_template()` and `load_pva_parameters()` functions.
+#' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
+#' @param custom.inits (Optional) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}. Should be a named list of po  Can be be outputs of the \code{init()} function from \code{PVAInvas}.
+#' @param sens.pcent (Optional) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @return pva A list of PVA outputs, including calculated parameters (`phie`:
 #'  unfished eggs per recruit, `R.A` and `R.B`: alpha and beta paramters for a
 #'  Beverton-Holt recruitment function, `Rinit`: initial recruitment,
@@ -11,13 +13,17 @@
 #' (`N1`: initial population size per simulation,
 #'
 #' )
-#' @examples
-#' load_pva_parameters('~/Documents/PVA_Examples/filledin_parameter_template.csv')
+#' @example
+#' # Run a simple PVA, no custom values or sensitivity testing.
+#' PVA(pva.params = inputParameterList)
+#' @example
 
-PVA <- function(pva.params, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
-  ### isolate({
+PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
+
+  #!# Initialize the population parameters?
+
   # controls is a list including number of time-steps (nT), number of ages (in time-steps) (A),
   #   number of juvenile stanzas (nS), age at recruitment (AR),
   #   and the number of simulations (n.sim)
@@ -27,6 +33,8 @@ PVA <- function(pva.params, custom.inits = NULL, sens.pcent = NULL, sens.params 
   #}
   if(!is.null(custom.inits)){
     inits <- custom.inits
+  } else {
+    inits <- init(params)
   }
   AR <- inits$AR
   A <- inits$A
@@ -56,79 +64,93 @@ PVA <- function(pva.params, custom.inits = NULL, sens.pcent = NULL, sens.params 
   nest <- inits$nest
 
   nT <- inits$nT                   # number of time-steps
-  nS <- input$nS                   # number of pre-recruit stanzas
-  n.sim <- input$n.sim             # number of simulations
+  nS <- parameters$nS                   # number of pre-recruit stanzas
+  n.sim <- parameters$n.sim             # number of simulations
   samp.A <- vector()               # time-step within a year that each gear is fished
-  r <- input$r                     # discounting rate = future generation discount factor
-  G <- input$G                     # generation time (years)
-  U.R <- vector()                  # proportion of pre-recruited animals removed per gear
-  U.A <- vector()                  # proportion of recruited animals removed per gear
-  q.R <- vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
-  q.A <- vector()                  # catchability of gear used to remove recruited animals
-  n.gear <- input$n.gear           # number of capture gears applied to recruited animals
-  t.start.R <- vector()            # time-step when sampling begins for each pre-recruit stanza
-  t.start.A <- vector()            # time-step when sampling begins for each gear used on recruited animals
-  E.R <- vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
-  E.A <- vector()                  # effort per time-step used to remove recruited animals
-  v.a <- vector()                  # Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)
-  v.b <- vector()                  # Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
-  v.c <- vector()                  # Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)
-  v.d <- vector()                  # Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
-  C.f.R <- vector()
-  C.f.A <- vector()
-  C.E.R <- vector()
-  C.E.A <- vector()
-  for(i in 1:nS){
-    U.R[i] <- eval(parse(text=paste0("input$UR",i)))
-    C.f.R[i] <- eval(parse(text=paste0("input$C.f.R",i)))
-    C.E.R[i] <- eval(parse(text=paste0("input$C.E.R",i)))
-    t.start.R[i] <- eval(parse(text=paste0("input$t.start.R",i)))
-    E.R[i] <- eval(parse(text=paste0("input$E.R",i)))
+  samp.A2 <- parameters$samp.A
+  r <- parameters$r                     # discounting rate = future generation discount factor
+  G <- parameters$G                     # generation time (years)
+  U.R <- parameters$U.R # vector()                  # proportion of pre-recruited animals removed per gear
+  U.A <- parameters$U.A # vector()                  # proportion of recruited animals removed per gear
+  q.R <- parameters$q.R # vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
+  q.A <- parameters$q.A # vector()                  # catchability of gear used to remove recruited animals
+  n.gear <- parameters$n.gear           # number of capture gears applied to recruited animals
+  t.start.R <- parameters$t.start.R # vector()            # time-step when sampling begins for each pre-recruit stanza
+  t.start.A <- parameters$t.start.A # vector()            # time-step when sampling begins for each gear used on recruited animals
+  E.R <- parameters$E.R # vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
+  E.A <- parameters$E.A # vector()                  # effort per time-step used to remove recruited animals
+  v.a <- parameters$v.a # vector()                  # Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.b <- parameters$v.b # vector()                  # Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  v.c <- parameters$v.c # vector()                  # Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.d <- parameters$v.d # vector()                  # Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  C.f.R <- parameters$C.f.R # vector()
+  C.f.A <- parameters$C.f.A # vector()
+  C.E.R <- parameters$C.E.R # vector()
+  C.E.A <- parameters$C.E.A # vector()
+
+
+  #!# #!# #!#
+
+
+
+#  for(i in 1:nS){
+#    U.R[i] <- eval(parse(text=paste0("parameters$UR",i)))
+#    C.f.R[i] <- eval(parse(text=paste0("parameters$C.f.R",i)))
+#    C.E.R[i] <- eval(parse(text=paste0("parameters$C.E.R",i)))
+#    t.start.R[i] <- eval(parse(text=paste0("parameters$t.start.R",i)))
+#    E.R[i] <- eval(parse(text=paste0("parameters$E.R",i)))
     #      print("-t.start.R-")
-    #      t.start.R[i] <- eval(parse(text=paste0("tmp.input$t.start.R",i)))
+    #      t.start.R[i] <- eval(parse(text=paste0("tmp.parameters$t.start.R",i)))
     #      print(t.start.R[i])
     #      print("-E.R-")
-    #      E.R[i] <- eval(parse(text=paste0("tmp.input$E.R",i)))
-  }
-  for(i in 1:n.gear){
-    U.A[i] <- eval(parse(text=paste0("input$UA",i)))
-    C.f.A[i] <- eval(parse(text=paste0("input$C.f.A",i)))
-    C.E.A[i] <- eval(parse(text=paste0("input$C.E.A",i)))
-    v.a[i] <- eval(parse(text=paste0("input$v.a",i)))
-    v.b[i] <- eval(parse(text=paste0("input$v.b",i)))
-    v.c[i] <- eval(parse(text=paste0("input$v.c",i)))
-    v.d[i] <- eval(parse(text=paste0("input$v.d",i)))
-    t.start.A[i] <- eval(parse(text=paste0("input$t.start.A",i)))
-    samp.A[i] <- eval(parse(text=paste0("input$sampA",i)))*dt
-    E.A[i] <- eval(parse(text=paste0("input$E.A",i)))
-  }
+    #      E.R[i] <- eval(parse(text=paste0("tmp.parameters$E.R",i)))
+#  }
+
+
+
+  #!# #!# #!#
+
+
+
+#  for(i in 1:n.gear){
+#    U.A[i] <- eval(parse(text=paste0("parameters$UA",i)))
+#    C.f.A[i] <- eval(parse(text=paste0("parameters$C.f.A",i)))
+#    C.E.A[i] <- eval(parse(text=paste0("parameters$C.E.A",i)))
+#    v.a[i] <- eval(parse(text=paste0("parameters$v.a",i)))
+#    v.b[i] <- eval(parse(text=paste0("parameters$v.b",i)))
+#    v.c[i] <- eval(parse(text=paste0("parameters$v.c",i)))
+#    v.d[i] <- eval(parse(text=paste0("parameters$v.d",i)))
+#    t.start.A[i] <- eval(parse(text=paste0("parameters$t.start.A",i)))
+#    samp.A[i] <- eval(parse(text=paste0("parameters$sampA",i)))*dt
+#   E.A[i] <- eval(parse(text=paste0("parameters$E.A",i)))
+#  }
 
   #!# How to deal with these?
-  reck <- input$reck             # recruitment compensation ratio
-  p.can <- input$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
-  K <- input$K                   # von Bertalanffy metabolic parameter
-  afec <- input$afec             # slope of fecundity-weight relationship
-  Wmat <- input$Wmat             # weight at maturity
-  t.spn <- input$t.spn           # range of time of year when spawning occurs
-  V1 <- input$V1                 # initial vulnerable abundance (used to create initial population)
-  cann.a <- input$cann.a         # age at which cannibalism on pre-recruits begins
-  bet <- input$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
-  sd.S <- input$sd.S             # standard deviation of environmental effect on survival
+  reck <- parameters$reck             # recruitment compensation ratio
+  p.can <- parameters$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
+  K <- parameters$K                   # von Bertalanffy metabolic parameter
+  afec <- parameters$afec             # slope of fecundity-weight relationship
+  Wmat <- parameters$Wmat             # weight at maturity
+  t.spn <- parameters$t.spn           # range of time of year when spawning occurs
+  V1 <- parameters$V1                 # initial vulnerable abundance (used to create initial population)
+  cann.a <- parameters$cann.a         # age at which cannibalism on pre-recruits begins
+  bet <- parameters$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
+  sd.S <- parameters$sd.S             # standard deviation of environmental effect on survival
 
-  # If alternative values given to PVA function, use these
-  if(!is.null(input.params)){
-    for(p in names(input.params)){
-      var.p <- get(p)
-      pInd <- which(!is.na(input.params[[p]]))
-      for(i in pInd){
-        #!# ASSIGN DOESN'T WORK ON VECTORS YUCK
-        #          assign(x=paste0(p,"[",i,"]"), value = input.params[[p]][[i]])
-        #          print(paste0(p,"[",i,"]"))
-        var.p[i] <- input.params[[p]][[i]]
-        assign(p,var.p)
-      }
-    }
-  }
+#  # If alternative values given to PVA function, use these
+#  if(!is.null(input.params)){
+#    for(p in names(input.params)){
+#      var.p <- get(p)
+#      pInd <- which(!is.na(input.params[[p]]))
+#      for(i in pInd){
+#        #!# ASSIGN DOESN'T WORK ON VECTORS YUCK
+#        #          assign(x=paste0(p,"[",i,"]"), value = input.params[[p]][[i]])
+#        #          print(paste0(p,"[",i,"]"))
+#        var.p[i] <- input.params[[p]][[i]]
+#        assign(p,var.p)
+#      }
+#    }
+#  }
 
   if(!is.null(sens.params)){
     # Skip modification of parameters if these are already in inits
@@ -267,5 +289,4 @@ PVA <- function(pva.params, custom.inits = NULL, sens.pcent = NULL, sens.params 
   out$runtime <- runtime
   gc()
   return(out)
-### })
 }
