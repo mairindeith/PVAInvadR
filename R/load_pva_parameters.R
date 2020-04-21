@@ -7,13 +7,11 @@
 
 load_pva_parameters <- function(filepath) {
   if (is.null(filepath)){
-    # RETURN WITH ERROR
+    stop("Please specify the filepath for the input PVA parameters.",
+      call. = FALSE)
   }
   param.list <- list()
-  read.dat <- read_csv(inFile$datapath,
-                       header = TRUE,
-                       colClasses = "character",
-                       sep = ",")
+  read.dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
 
   rename.params <- list('U.R', 'U.A','samp.A','CfR','CfA','ER','EA','CEA','CER','va','vb','vc','vd','tstartA','tstartR') #,'t.start.A','E.R','E.A')
   names(rename.params) <- c('UR', 'UA','sampA','C.f.R','C.f.A','E.R','E.A','C.E.A','C.E.R','v.a','v.b','v.c','v.d','t.start.A','t.start.R') #, 'tstartA','ER','EA')
@@ -24,14 +22,13 @@ load_pva_parameters <- function(filepath) {
       rename.index <- which(rename.params == param.name)
       param.name <- names(rename.params)[rename.index]
     }
-    param.value <- as.numeric(unlist(strsplit(read.dat[p,2], split=";")))
-    param.list[[p]] <- param.value
-    names(param.list[p]) <- param.name
-    #if(length(param.value)[[1]]==1){
-    #  if(is.na(param.value) || param.value == ""){
-    #    next
-    #  }
-    # }
+
+    if(param.name == "species"){
+      param.value <- read.dat[p,2]
+    } else {
+      param.value <- suppressWarnings(as.numeric(unlist(strsplit(read.dat[p,2], split=";"))))
+    }
+    param.list[[param.name]] <- param.value
   }
   return(param.list)
 }
