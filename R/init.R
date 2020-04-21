@@ -1,6 +1,6 @@
-#' Initialize parameters for use in a \code{pva()} simulated run; called by the \code{pva()} function. 
+#' Initialize parameters for use in a \code{pva()} simulated run; called by the \code{pva()} function.
 #'
-#' 
+#'
 
 "init" <- function(input, input.params = NULL, p.cent.trans = NULL){
     #!#
@@ -13,7 +13,6 @@
     if(is.null(p.cent.trans)) {
       pFact <- 1.0
     }
-
     # dt <- input$dt
     dt <- 1/input$dt               # time-step in years
     R0 <- input$R0                 # unfished equilibrium recruitment
@@ -57,50 +56,47 @@
     C.E.R <- vector()
     C.E.A <- vector()
     for(i in 1:nS){
-      Ms[i] <- eval(parse(text=paste0("input$Ms",i)))
-      Bs[i] <- eval(parse(text=paste0("input$Bs",i)))
-      U.R[i] <- eval(parse(text=paste0("input$UR",i)))
-      t.start.R[i] <- eval(parse(text=paste0("input$t.start.R",i)))
-      E.R[i] <- eval(parse(text=paste0("input$E.R",i)))
-      C.f.R[i] <- eval(parse(text=paste0("input$C.f.R",i)))
-      C.E.R[i] <- eval(parse(text=paste0("input$C.E.R",i)))
+      Ms[i] <- input$Ms[i]
+      Bs[i] <- input$Bs[i]
+      U.R[i] <- input$UR[i]
+      t.start.R[i] <- input$t.start.R[i]
+      E.R[i] <- input$E.R[i]
+      C.f.R[i] <- input$C.f.R[i]
+      C.E.R[i] <- input$C.E.R[i]
     }
     for(i in 1:n.gear){
-      U.A[i] <- eval(parse(text=paste0("input$UA",i)))
-      t.start.A[i] <- eval(parse(text=paste0("input$t.start.A",i)))
-      samp.A[i] <- eval(parse(text=paste0("input$sampA",i)))*dt
-      E.A[i] <- eval(parse(text=paste0("input$E.A",i)))
-      C.f.A[i] <- eval(parse(text=paste0("input$C.f.A",i)))
-      C.E.A[i] <- eval(parse(text=paste0("input$C.E.A",i)))
-      v.a[i] <- eval(parse(text=paste0("input$v.a",i)))
-      v.b[i] <- eval(parse(text=paste0("input$v.b",i)))
-      v.c[i] <- eval(parse(text=paste0("input$v.c",i)))
-      v.d[i] <- eval(parse(text=paste0("input$v.d",i)))
+      U.A[i] <- input$UA[i]
+      t.start.A[i] <- input$t.start.A[i]
+      samp.A[i] <- input$sampA[i]
+      E.A[i] <- input$E.A[i]
+      C.f.A[i] <- input$C.f.A[i]
+      C.E.A[i] <- input$C.E.A[i]
+      v.a[i] <- input$v.a[i]
+      v.b[i] <- input$v.b[i]
+      v.c[i] <- input$v.c[i]
+      v.d[i] <- input$v.d[i]
     }
 
     for(i in input$AR:input$A){
       j <- i-input$AR+1
-      init.try <- try(init.Na[j] <- eval(parse(text=paste0("input$init.NA",j))))
+      init.try <- try(init.Na[j] <- input$init.NA[j])
       if (class(init.try) == "try-error") {
-        cat("Caught an error during fread, trying read.table.\n")
+        cat("Caught an error reading init NAs, applying default `NA` value.\n")
         init.Na[j] <- "NA"
       }
     }
 
     # Modify population parameter values provided
     #   in a vector of strings of parameter names
+    # This applies during sensitivity testing.
     if(!is.null(input.params)){
       for(params in input.params){
         if(params %in% c("Ms", "Bs")){
           for(i in 1:nS){
             o.value <- get(params)
-            # print("Multiplication factor: ")
-            # print(paste0("...",pFact))
-            # print(paste0("Original value for ",params,": ",o.value))
             assign(params, o.value*pFact)
-            # print(paste0("...New value for ",params,": ",o.value*pFact))
-            Ms[i] <- eval(parse(text=paste0("input$Ms",i)))
-            Bs[i] <- eval(parse(text=paste0("input$Bs",i)))
+            Ms[i] <- input$Ms[i]
+            Bs[i] <- input$Bs[i]
           }
         }
         o.value <- get(params)
@@ -271,4 +267,3 @@
     print("Done init")
     return(out)
   }
-
