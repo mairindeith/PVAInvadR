@@ -87,45 +87,6 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
   C.f.A <- parameters$C.f.A # vector()
   C.E.R <- parameters$C.E.R # vector()
   C.E.A <- parameters$C.E.A # vector()
-
-
-  #!# #!# #!#
-
-
-
-#  for(i in 1:nS){
-#    U.R[i] <- eval(parse(text=paste0("parameters$UR",i)))
-#    C.f.R[i] <- eval(parse(text=paste0("parameters$C.f.R",i)))
-#    C.E.R[i] <- eval(parse(text=paste0("parameters$C.E.R",i)))
-#    t.start.R[i] <- eval(parse(text=paste0("parameters$t.start.R",i)))
-#    E.R[i] <- eval(parse(text=paste0("parameters$E.R",i)))
-    #      print("-t.start.R-")
-    #      t.start.R[i] <- eval(parse(text=paste0("tmp.parameters$t.start.R",i)))
-    #      print(t.start.R[i])
-    #      print("-E.R-")
-    #      E.R[i] <- eval(parse(text=paste0("tmp.parameters$E.R",i)))
-#  }
-
-
-
-  #!# #!# #!#
-
-
-
-#  for(i in 1:n.gear){
-#    U.A[i] <- eval(parse(text=paste0("parameters$UA",i)))
-#    C.f.A[i] <- eval(parse(text=paste0("parameters$C.f.A",i)))
-#    C.E.A[i] <- eval(parse(text=paste0("parameters$C.E.A",i)))
-#    v.a[i] <- eval(parse(text=paste0("parameters$v.a",i)))
-#    v.b[i] <- eval(parse(text=paste0("parameters$v.b",i)))
-#    v.c[i] <- eval(parse(text=paste0("parameters$v.c",i)))
-#    v.d[i] <- eval(parse(text=paste0("parameters$v.d",i)))
-#    t.start.A[i] <- eval(parse(text=paste0("parameters$t.start.A",i)))
-#    samp.A[i] <- eval(parse(text=paste0("parameters$sampA",i)))*dt
-#   E.A[i] <- eval(parse(text=paste0("parameters$E.A",i)))
-#  }
-
-  #!# How to deal with these?
   reck <- parameters$reck             # recruitment compensation ratio
   p.can <- parameters$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
   K <- parameters$K                   # von Bertalanffy metabolic parameter
@@ -137,21 +98,7 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
   bet <- parameters$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
   sd.S <- parameters$sd.S             # standard deviation of environmental effect on survival
 
-#  # If alternative values given to PVA function, use these
-#  if(!is.null(input.params)){
-#    for(p in names(input.params)){
-#      var.p <- get(p)
-#      pInd <- which(!is.na(input.params[[p]]))
-#      for(i in pInd){
-#        #!# ASSIGN DOESN'T WORK ON VECTORS YUCK
-#        #          assign(x=paste0(p,"[",i,"]"), value = input.params[[p]][[i]])
-#        #          print(paste0(p,"[",i,"]"))
-#        var.p[i] <- input.params[[p]][[i]]
-#        assign(p,var.p)
-#      }
-#    }
-#  }
-
+  # Apply this when testing sensitivity to biological parameters
   if(!is.null(sens.params)){
     # Skip modification of parameters if these are already in inits
     if(sens.params %in% names(inits) | sens.params %in% c("Bs","Ms")){
