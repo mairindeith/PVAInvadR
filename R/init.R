@@ -15,7 +15,11 @@
     }
     # dt <- input$dt
     dt <- 1/input$dt               # time-step in years
-    R0_in <- input$R0                 # unfished equilibrium recruitment
+    R0 <- input$R0                 # unfished equilibrium recruitment
+    # TRY:
+    V0 <- input$V0
+    print(paste0("R0: ", R0))
+    print(paste0("V0: ", V0))
     reck <- input$reck             # recruitment compensation ratio
     p.can <- input$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
     A <- as.integer(input$A/dt)    # age at 1% survivorship
@@ -143,10 +147,11 @@
     lx <- c(1,Sa[1:(A-AR)])                         # incomplete survivorship to age
     lx <- cumprod(lx)                               # survivorship
     sel <- matrix(nrow=n.gear,ncol=A-AR+1)
-    V0 <- c(input$min.V0, input$max.V0)
-    suppressWarnings(R0 <- V0/sum(lx*init.t))
+    V0 <- c(V0[1], V0[2])
+    R0 <- V0/sum(lx*init.t)
+    # print(paste0("R0: ", R0))
 #!#    R0 <- runif(n.sim, min = 10^R0[1], max = 10^R0[2])        # Unfished recruitment (calculated from V0)
-    R0 <- runif(n.sim, min = R0_in[1], max = R0_in[2])
+    R0 <- runif(n.sim, min = R0[1], max = R0[2])
     for(i in 1:n.gear){
       sel[i,] <- 1/(1+exp(-(la-v.b[i])/v.a[i]))-1/(1+exp(-(la-v.d[i])/v.c[i]))
       sel[i,] <- sel[i,]/max(sel[i,])
