@@ -15,7 +15,7 @@
     }
     # dt <- input$dt
     dt <- 1/input$dt               # time-step in years
-    R0 <- input$R0                 # unfished equilibrium recruitment
+    R0_in <- input$R0                 # unfished equilibrium recruitment
     reck <- input$reck             # recruitment compensation ratio
     p.can <- input$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
     A <- as.integer(input$A/dt)    # age at 1% survivorship
@@ -31,7 +31,7 @@
     sd.S <- input$sd.S             # standard deviation of environmental effect on survival
     init.Na <- vector()            # initial age-structure in the event those data exist
 
-    nT <- input$nT/dt                # number of time-steps
+    nT <- input$nT/dt                # number of R0time-steps
     nS <- input$nS                   # number of pre-recruit stanzas
     AR <- input$AR/dt                # age at recruitment in time-steps
     n.sim <- input$n.sim             # number of simulations
@@ -124,7 +124,7 @@
     l0 <- la[1]
     Minf <- log(0.01)*K/(log(l0)-log(l0+exp(K*(A-AR)*dt)-1))   # Lorenzen-based mortality rate for fish at Linf
     spn <- rep(0,A-AR+1)                            # time-steps when spawning occurs
-    i<-rep(seq(1,1/dt,length=1/dt),A*dt)[AR:A]
+    i <- rep(seq(1,1/dt,length=1/dt),A*dt)[AR:A]
 #!#    if(t.spn[1] == t.spn[2]){
 #!#      spn[which(i >= t.spn[1]/dt)] <- 1
 #!#      spn[which(i >= t.spn[1])] <- 1
@@ -133,7 +133,7 @@
 #!#      spn[which(i >= t.spn[1] & i < t.spn[2])] <- 1
 #!#    }
     #!# ALTERNATE FORM THAT MAKES MORE SENSE TO ME
-    spn[which(i >= t.spn[1] & i <= t.spn[2])] <- 1
+    spn[which(i >= t.spn[1] & i < t.spn[2])] <- 1
     fec <- (pmax(0,wa-Wmat)*afec)                   # unfished eggs at age
     mat <- rep(0,A-AR+1)
     mat[which(fec>0)] <- 1
@@ -146,7 +146,7 @@
     V0 <- c(input$min.V0, input$max.V0)
     suppressWarnings(R0 <- V0/sum(lx*init.t))
 #!#    R0 <- runif(n.sim, min = 10^R0[1], max = 10^R0[2])        # Unfished recruitment (calculated from V0)
-    R0 <- runif(n.sim, min = R0[1], max = R0[2])
+    R0 <- runif(n.sim, min = R0_in[1], max = R0_in[2])
     for(i in 1:n.gear){
       sel[i,] <- 1/(1+exp(-(la-v.b[i])/v.a[i]))-1/(1+exp(-(la-v.d[i])/v.c[i]))
       sel[i,] <- sel[i,]/max(sel[i,])
@@ -183,8 +183,6 @@
       Ntmp <- matrix(data=c(rep(1e-15,n.sim),rep(0,(A-AR)*n.sim)),nrow=A-AR+1,ncol=n.sim,byrow=TRUE)
       pairs <- Ntmp/2
       Et <- colSums(sweep(pairs,MARGIN=1,fec*spn,'*'))
-#      print("Et")
-#      print(Et)
       M1.t <- R.B*log(R.A)/(R.A-1)
       Nprev <- Ntmp
       t<-2
