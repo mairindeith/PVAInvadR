@@ -18,8 +18,6 @@
     R0 <- input$R0                 # unfished equilibrium recruitment
     # TRY:
     V0 <- input$V0
-    print(paste0("R0: ", R0))
-    print(paste0("V0: ", V0))
     reck <- input$reck             # recruitment compensation ratio
     p.can <- input$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
     A <- as.integer(input$A/dt)    # age at 1% survivorship
@@ -129,14 +127,6 @@
     Minf <- log(0.01)*K/(log(l0)-log(l0+exp(K*(A-AR)*dt)-1))   # Lorenzen-based mortality rate for fish at Linf
     spn <- rep(0,A-AR+1)                            # time-steps when spawning occurs
     i <- rep(seq(1,1/dt,length=1/dt),A*dt)[AR:A]
-#!#    if(t.spn[1] == t.spn[2]){
-#!#      spn[which(i >= t.spn[1]/dt)] <- 1
-#!#      spn[which(i >= t.spn[1])] <- 1
-#!#    } else {
-#!#      spn[which(i >= t.spn[1]/dt & i < t.spn[2]/dt)] <- 1
-#!#      spn[which(i >= t.spn[1] & i < t.spn[2])] <- 1
-#!#    }
-    #!# ALTERNATE FORM THAT MAKES MORE SENSE TO ME
     spn[which(i >= t.spn[1] & i < t.spn[2])] <- 1
     fec <- (pmax(0,wa-Wmat)*afec)                   # unfished eggs at age
     mat <- rep(0,A-AR+1)
@@ -149,14 +139,11 @@
     sel <- matrix(nrow=n.gear,ncol=A-AR+1)
     V0 <- c(V0[1], V0[2])
     R0 <- V0/sum(lx*init.t)
-    # print(paste0("R0: ", R0))
-#!#    R0 <- runif(n.sim, min = 10^R0[1], max = 10^R0[2])        # Unfished recruitment (calculated from V0)
     R0 <- runif(n.sim, min = R0[1], max = R0[2])
     for(i in 1:n.gear){
       sel[i,] <- 1/(1+exp(-(la-v.b[i])/v.a[i]))-1/(1+exp(-(la-v.d[i])/v.c[i]))
       sel[i,] <- sel[i,]/max(sel[i,])
     }
-      #sel[i,] <- 1/(1-v.c[i])*((1-v.c[i])/v.c[i])^v.c[i]*exp(v.a[i]*v.c[i]*(v.b[i]-la))/(1+exp(v.a[i]*(v.b[i]-la)))
     phie <- sum(lx*fec*spn/2)                       # unfished eggs per recruit
     R.A <- reck/phie                                # alpha of recruitment function
     R.B <- (reck-1)/(R0*phie)                       # beta of Beverton-Holt recruitment function
@@ -234,9 +221,7 @@
              nest[1,] <- as.integer(colSums(sweep(pairs,MARGIN=1,mat*spn,'*')))
            })
     Sa.M <- matrix(rep(Sa,n.sim),nrow=A-AR+1,ncol=n.sim)
-    runtime <- Sys.time()-start
-    print(runtime)
-
+    # Prepare outputs
     out <- list()
     out$AR <- AR
     out$A <- A
@@ -267,6 +252,6 @@
     out$Et <- Et
     out$nest <- nest
     out$init.t <- init.t
-    print("Done init")
+    out$n.sim <- n.sim
     return(out)
   }

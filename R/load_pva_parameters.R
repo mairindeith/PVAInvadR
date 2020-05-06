@@ -22,7 +22,6 @@ load_pva_parameters <- function(filepath) {
       rename.index <- which(rename.params == param.name)
       param.name <- names(rename.params)[rename.index]
     }
-
     if(param.name == "species"){
       param.value <- read.dat[p,2]
     } else {

@@ -3,22 +3,24 @@
 #' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
 #' @param custom.inits (Optional) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}. Should be a named list of po  Can be be outputs of the \code{init()} function from \code{PVAInvas}.
 #' @param sens.pcent (Optional) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
-#' @return pva A list of PVA outputs, including calculated parameters (`phie`:
-#'  unfished eggs per recruit, `R.A` and `R.B`: alpha and beta paramters for a
-#'  Beverton-Holt recruitment function, `Rinit`: initial recruitment,
-#' `amat`: age at maturity to differentiate adults and sub-adults,
-#' `A.s`: maximum survival in each stanza, and
-#' `B.s`: carrying capacity parameter for each stanza)
+#' @return pva
+#' * A list of PVA outputs, including calculated parameters:
+#'  - `phie`: unfished eggs per recruit,
+#'  - `R.A` and `R.B`: alpha and beta paramters for a Beverton-Holt recruitment function,
+#'  - `Rinit`: initial recruitment,
+#'  - `amat`: age at maturity to differentiate adults and sub-adults,
+#'  - `A.s`: maximum survival in each stanza, and
+#'  - `B.s`: carrying capacity parameter for each stanza)
+#'
 #' and PVA-generated calculations for each iteration of the simulation
-#' (`N1`: initial population size per simulation,
+#'  - `N1`: initial population size per simulation,
 #'
 #' )
-#' @example
+#' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' PVA(pva.params = inputParameterList)
-#' @example
 
-PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
+PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
 
@@ -39,7 +41,7 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
   AR <- inits$AR
   A <- inits$A
   dt <- inits$dt
-  R0 <- inits$R0.vec
+  R0 <- inits$R0
   age <- inits$age
   la <- inits$la
   wa <- inits$wa
@@ -64,39 +66,39 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
   nest <- inits$nest
 
   nT <- inits$nT                   # number of time-steps
-  nS <- parameters$nS                   # number of pre-recruit stanzas
-  n.sim <- parameters$n.sim             # number of simulations
-  samp.A <- vector()               # time-step within a year that each gear is fished
-  samp.A2 <- parameters$samp.A
-  r <- parameters$r                     # discounting rate = future generation discount factor
-  G <- parameters$G                     # generation time (years)
-  U.R <- parameters$U.R # vector()                  # proportion of pre-recruited animals removed per gear
-  U.A <- parameters$U.A # vector()                  # proportion of recruited animals removed per gear
-  q.R <- parameters$q.R # vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
-  q.A <- parameters$q.A # vector()                  # catchability of gear used to remove recruited animals
-  n.gear <- parameters$n.gear           # number of capture gears applied to recruited animals
-  t.start.R <- parameters$t.start.R # vector()            # time-step when sampling begins for each pre-recruit stanza
-  t.start.A <- parameters$t.start.A # vector()            # time-step when sampling begins for each gear used on recruited animals
-  E.R <- parameters$E.R # vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
-  E.A <- parameters$E.A # vector()                  # effort per time-step used to remove recruited animals
-  v.a <- parameters$v.a # vector()                  # Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)
-  v.b <- parameters$v.b # vector()                  # Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
-  v.c <- parameters$v.c # vector()                  # Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)
-  v.d <- parameters$v.d # vector()                  # Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
-  C.f.R <- parameters$C.f.R # vector()
-  C.f.A <- parameters$C.f.A # vector()
-  C.E.R <- parameters$C.E.R # vector()
-  C.E.A <- parameters$C.E.A # vector()
-  reck <- parameters$reck             # recruitment compensation ratio
-  p.can <- parameters$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
-  K <- parameters$K                   # von Bertalanffy metabolic parameter
-  afec <- parameters$afec             # slope of fecundity-weight relationship
-  Wmat <- parameters$Wmat             # weight at maturity
-  t.spn <- parameters$t.spn           # range of time of year when spawning occurs
-  V1 <- parameters$V1                 # initial vulnerable abundance (used to create initial population)
-  cann.a <- parameters$cann.a         # age at which cannibalism on pre-recruits begins
-  bet <- parameters$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
-  sd.S <- parameters$sd.S             # standard deviation of environmental effect on survival
+  nS <- params$nS                   # number of pre-recruit stanzas
+  n.sim <- params$n.sim             # number of simulations
+  samp.A <- params$sampA
+  # samp.A <- vector()               # time-step within a year that each gear is fished
+  r <- params$r                     # discounting rate = future generation discount factor
+  G <- params$G                     # generation time (years)
+  U.R <- params$U.R # vector()                  # proportion of pre-recruited animals removed per gear
+  U.A <- params$U.A # vector()                  # proportion of recruited animals removed per gear
+  q.R <- params$q.R # vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
+  q.A <- params$q.A # vector()                  # catchability of gear used to remove recruited animals
+  n.gear <- params$n.gear           # number of capture gears applied to recruited animals
+  t.start.R <- params$t.start.R # vector()            # time-step when sampling begins for each pre-recruit stanza
+  t.start.A <- params$t.start.A # vector()            # time-step when sampling begins for each gear used on recruited animals
+  E.R <- params$E.R # vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
+  E.A <- params$E.A # vector()                  # effort per time-step used to remove recruited animals
+  v.a <- params$v.a # vector()                  # Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.b <- params$v.b # vector()                  # Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  v.c <- params$v.c # vector()                  # Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)
+  v.d <- params$v.d # vector()                  # Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)
+  C.f.R <- params$C.f.R # vector()
+  C.f.A <- params$C.f.A # vector()
+  C.E.R <- params$C.E.R # vector()
+  C.E.A <- params$C.E.A # vector()
+  reck <- params$reck             # recruitment compensation ratio
+  p.can <- params$p.can           # proportion of recruit mortality at equilibrium due to cannibalism
+  K <- params$K                   # von Bertalanffy metabolic parameter
+  afec <- params$afec             # slope of fecundity-weight relationship
+  Wmat <- params$Wmat             # weight at maturity
+  t.spn <- params$t.spn           # range of time of year when spawning occurs
+  V1 <- params$V1                 # initial vulnerable abundance (used to create initial population)
+  cann.a <- params$cann.a         # age at which cannibalism on pre-recruits begins
+  bet <- params$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
+  sd.S <- params$sd.S             # standard deviation of environmental effect on survival
 
   # Apply this when testing sensitivity to biological parameters
   if(!is.null(sens.params)){
@@ -148,16 +150,18 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
     Vt <- colSums(Nt[t-1,AR:A,])
     for(i in 1:n.gear){
       q.N <- q.A[i]*pmax(1,Vt)^(-bet)
-      ifelse(t*dt-as.integer(t*dt)==samp.A[i],
-      #        if(t<16) cat(t," gear ",i,"\nq.A",q.A[i],"\nq.N",q.N[1],"\nE.A",E.A[i],"\ngo.A",go.A[i,t],"\n")
-             Ft.A[[i]] <- go.A[i,t]*(E.A[i]*sel[i,] %o% q.N),
-             Ft.A[[i]] <- go.A[i,t]*matrix(rep(0,(A-AR+1)*n.sim),nrow=A-AR+1,ncol=n.sim))
+      if(t*dt-as.integer(t*dt)==samp.A[i]){
+        Ft.A[[i]] <- go.A[i,t]*(E.A[i]*sel[i,] %o% q.N)
+      } else {
+        Ft.A[[i]] <- go.A[i,t]*matrix(rep(0,(A-AR+1)*n.sim),nrow=A-AR+1,ncol=n.sim)
+      }
     }
     Ft <- Reduce('+',Ft.A)
     Zt <- Ft - log(Sa.M)
     for(i in 1:n.gear){
       Ct[t,nS+i] <- sum(Nt[t-1,AR:A,] * Ft.A[[i]]/Zt * ( 1 - exp( -Zt)))
     }
+    # Get through the loop?
 #      if(t<16) cat(t," F\n",Ft[,1],"\nZt",Zt[,1],"\nSa",exp(-Zt[1:(A-AR),1]),"\n")
     Nt[t,(AR+1):A,] <- matrix(rbinom((A-AR)*n.sim,Nt[t-1,AR:(A-1),],exp(-Zt[1:(A-AR),])),ncol=n.sim)
     pairs <- matrix(as.integer(Nt[t,AR:A,]/2),ncol=n.sim)
@@ -233,6 +237,7 @@ PVA <- function(parameters, inits = NULL, custom.inits = NULL, sens.pcent = NULL
   out$NPV <- NPV
   out$E.NPV <- E.NPV
   out$NT <- NT
+  out$
   out$runtime <- runtime
   gc()
   return(out)
