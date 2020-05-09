@@ -251,7 +251,7 @@ PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, se
     cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
     cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
     # Pulls in vwReg2
-    out$plot <- vwReg2(data=data,input=out,set.ymax=set.ymax)
+    out$plot <- vwReg2(data=data,input=init,set.ymax=set.ymax)
   }
   gc()
   return(out)
