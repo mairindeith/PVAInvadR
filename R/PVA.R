@@ -3,6 +3,7 @@
 #' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
 #' @param custom.inits (Optional) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}. Should be a named list of po  Can be be outputs of the \code{init()} function from \code{PVAInvas}.
 #' @param sens.pcent (Optional) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
+#' @param create.plot (Optional) Should a ggplot heatmap object also be provided? Default: false. Will return a list with the final entry being the created plot.
 #' @return pva
 #' * A list of PVA outputs, including calculated parameters:
 #'  - `phie`: unfished eggs per recruit,
@@ -20,7 +21,8 @@
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' PVA(pva.params = inputParameterList)
 
-PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL){
+PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL,
+  create.plot = FALSE, set.plot.y = NULL){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
 
@@ -215,7 +217,6 @@ PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, se
 
   runtime <- Sys.time()-start
   print(runtime)
-
   out <- list()
   out$phie <- phie
   out$R.A <- R.A
@@ -239,6 +240,19 @@ PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, se
   out$NT <- NT
   out$
   out$runtime <- runtime
+  if(create.plot){
+    Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
+    Na <- Na[1:nT,]
+    data <- data.frame(Na)
+    names(data) <- rep("y",n.sim)
+    data$x <- (1:nT)*dt
+    cat("Plotting PVA results\n...Probability of extirpation after:\n")
+    cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
+    cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
+    cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
+    # Pulls in vwReg2
+    out$plot <- vwReg2(data=data,input=out,set.ymax=set.ymax)
+  }
   gc()
   return(out)
 }
