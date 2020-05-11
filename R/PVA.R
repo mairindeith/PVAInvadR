@@ -5,36 +5,44 @@
 #' @param sens.pcent (Optional) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param create.plot (Optional) Should a ggplot heatmap object also be provided? Default: false. Will return a list with the final entry being the created plot.
 #' @return pva
-#' * A list of PVA outputs, including calculated parameters:
-#'  - `phie`: unfished eggs per recruit,
-#'  - `R.A` and `R.B`: alpha and beta paramters for a Beverton-Holt recruitment function,
-#'  - `Rinit`: initial recruitment,
-#'  - `amat`: age at maturity to differentiate adults and sub-adults,
-#'  - `A.s`: maximum survival in each stanza, and
-#'  - `B.s`: carrying capacity parameter for each stanza)
+#' * A named list of PVA outputs, including calculated parameters (from init())
+#'   and outputs of the PVA.
+#' * Calculated outputs from init():
+#'  - `phie`: unfished eggs per recruit at equilibrium,
+#'  - `R.A`: stage-independent maximum survival (alpha parameter of Beverton-Holt recruitment),
+#'  - `R.B`: stage-independent carrying capacity (beta parameter of Beverton-Holt recruitment),
+#'  - `A.s`: stanza-specific maximum survival (alpha parameter of Beverton-Holt recruitment),
+#'  - `B.s`: stanza-specifc carrying capacity (beta parameter of Beverton-Holt recruitment).
 #'
-#' and PVA-generated calculations for each iteration of the simulation
-#'  - `N1`: initial population size per simulation,
+#' * Objects created from PVA simulations
+#'  - `Nt`: 3-dimensional abundance array (dimensions: time-steps, ages, simulations),
+#'  - `Et`: matrix of eggs for each timestep for each year in each simulation,
+#'  - `nest`: !!!!!!!!!!!! estimated numbers for each year in each simulation,
+#'  - `Vfin`: vector of abundance in the final year across simulations,
+#'  - `p.extinct`: vector of proportion of erdicated in each time step,
+#'  - `p.extinct.50`: proportion of simulations where the population is eradicated by the 50th time step,
+#'  - `p.extinct.100`: proportion of simulations where the population is eradicated by the 100th time step,
+#'  - `p.extinct.200`: proportion of simulations where the population is eradicated by the 200th time step,
+#'  - `t.extinct`: minimum number of timesteps needed for eradiction,
+#'  - `yext.seq`:
+#'  - `cost.1`: annual cost of sampling,
+#'  - `cost.T`: total cost of sampling (up to the end of simulation or until 100% eradication),
+#'  - `NPV`: net present value of sampling (taking into account intergenerational discounting),
+#'  - `E.NPV`: expected mean present value (mean of NPV)
+#'  - `NT`: abundance in the final time-step (reported as 5th percentile, mean, and 95 percentile of distributions),
+#'  - `runtime`: time to execute the PVA,
+#'  - `plot`: (Optional) if `create_plot=TRUE`, `plot` is returned as a ggplot object with multiple components. Created by the function `vwReg2.R`.
 #'
-#' )
 #' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' PVA(pva.params = inputParameterList)
 
-PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, sens.params = NULL,
-  create.plot = FALSE, set.plot.y = NULL){
+PVA <- function(params, inits = NULL, custom.inits = NULL,
+  sens.pcent = NULL, sens.params = NULL, create.plot = FALSE,
+  set.plot.y = NULL, testing=TRUE){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
 
-  #!# Initialize the population parameters?
-
-  # controls is a list including number of time-steps (nT), number of ages (in time-steps) (A),
-  #   number of juvenile stanzas (nS), age at recruitment (AR),
-  #   and the number of simulations (n.sim)
-  # parameters is a list of all parameters
-  #if(!is.null(input.params)){
-  #  inits <- input.params
-  #}
   if(!is.null(custom.inits)){
     inits <- custom.inits
   } else {
@@ -188,8 +196,12 @@ PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, se
   y.extinct[2:nyrs] <- y.extinct[2:nyrs]-(y.extinct[1:(nyrs-1)])
   sum.extinct <- sum(y.extinct)
   y.extinct[nyrs] <- n.sim-sum.extinct
-  if(is.na(sum.extinct)) y.extinct[nyrs]<-n.sim
-  if(sum(y.extinct)<n.sim)y.extinct[nyrs]<-y.extinct[nyrs]+n.sim-sum(y.extinct)
+  if(is.na(sum.extinct)){
+    y.extinct[nyrs] <- n.sim
+  }
+  if(sum(y.extinct) < n.sim){
+    y.extinct[nyrs] <- y.extinct[nyrs]+n.sim-sum(y.extinct)
+  }
   yext.seq <- rep(1:nyrs,y.extinct)
   y.extinct <- y.extinct / n.sim
 
@@ -238,21 +250,25 @@ PVA <- function(params, inits = NULL, custom.inits = NULL, sens.pcent = NULL, se
   out$NPV <- NPV
   out$E.NPV <- E.NPV
   out$NT <- NT
-  out$
   out$runtime <- runtime
-  if(create.plot){
-    Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
-    Na <- Na[1:nT,]
-    data <- data.frame(Na)
-    names(data) <- rep("y",n.sim)
-    data$x <- (1:nT)*dt
-    cat("Plotting PVA results\n...Probability of extirpation after:\n")
-    cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
-    cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
-    cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
-    # Pulls in vwReg2
-    out$plot <- vwReg2(data=data,input=init,set.ymax=set.ymax)
+  if(testing){
+    out$inits = inits
+    return(out)
+  } else {
+    if(create.plot){
+      Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
+      Na <- Na[1:inits$nT,]
+      data <- data.frame(Na)
+      names(data) <- rep("y",n.sim)
+      data$x <- (1:nT)*dt
+      cat("Plotting PVA results\n...Probability of extirpation after:\n")
+      cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
+      cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
+      cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
+      # Pulls in vwReg2
+      out$plot <- vwReg2(data=data,input=inits,set.ymax=set.ymax)
+    }
+    return(out)
   }
   gc()
-  return(out)
 }
