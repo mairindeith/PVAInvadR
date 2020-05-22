@@ -1,8 +1,8 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
 #'
 #' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
-#' @param custom.inits (Optional) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}. Should be a named list of po  Can be be outputs of the \code{init()} function from \code{PVAInvas}.
-#' @param sens.pcent (Optional) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
+#' @param custom.inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}. Should be a named list. Can be be outputs of the \code{init()} function from \code{PVAInvas}.
+#' @param sens.pcent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param create.plot (Optional) Should a ggplot heatmap object also be provided? Default: false. Will return a list with the final entry being the created plot.
 #' @return pva
 #' * A named list of PVA outputs, including calculated parameters (from init())
