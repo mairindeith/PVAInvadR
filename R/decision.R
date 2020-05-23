@@ -1,20 +1,27 @@
 #' Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.
 #'
-#
-#' @param 
+#' @param
 #' @param custom.inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.
 #' @param sens.pcent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param direction (Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?
-
+#'
 #' @return
 #' @examples
 
-"decision" <- function(inits, sens.pcent = NULL, direction = NULL, sens.params = NULL, run_parallel = F){ #, save_pva = F){
-  n_cores <- detectCores() - 1
-  if(is.na(n_cores)){
-    n_cores <- 1
+"decision" <- function(inits, decision_csv = , decision_list = , sens.pcent = NULL, direction = NULL, sens.params = NULL, run_parallel = F){ #, save_pva = F){
+  if(is.null(decision_csv) && is.null(decision_list)){
+    stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
+    return(NULL)
   }
-  registerDoParallel(n_cores)
+  # Convert decision_ info into a readable format
+  if(!is.null(decision_csv)){
+    d_info = read_csv(decision_csv)
+  } else if(!is.null(decision_list)){
+    scen_names = names(decision_list)
+    
+    d_info = data.frame(
+      decision_list
+  }
   start <- Sys.time()
 
   dt <- inits$dt
@@ -37,11 +44,6 @@
   NT.med <- list()
   NT.ucl <- list()
 
-  # Introduce parallel here
-  # How many cores?
-#    try(stopCluster(cl), silent = T)
-  # New functionality with doParallel instead of parallel
-  # Should no longer need OS-specific parallel calls
   if(run_parallel == T){
     n_cores <- detectCores() - 1
     if(is.na(n_cores)){

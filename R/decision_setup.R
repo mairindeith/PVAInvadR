@@ -21,6 +21,10 @@
 decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   gui = T, selected_params = NULL){
   # Identify all possible parameters that could be modified by scenarios
+
+
+
+
   all_params = c(
     paste0("t.start.R.", 1:input$nS),
     paste0("t.start.A.",1:input$n.gear),
@@ -29,6 +33,19 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     paste0("U.R.",1:input$nS),
     paste0("E.A.",1:input$n.gear)
   )
+  # Is it worth converting from a named numbered list to vectors?
+
+
+
+  orig_values = list(
+    "t.start.R" = input$t.start.R,
+    "t.start.A" = input$t.start.A,
+    "samp.A" = input$samp.A,
+    "E.R" = input$E.R,
+    "U.R" = input$U.R,
+    "E.A" = input$E.A
+  )
+
   if(gui == F){
     # If the GUI does not pop up, selected parameters must be provided.
     if(is.null(selected_params)){
