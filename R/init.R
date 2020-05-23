@@ -223,35 +223,40 @@
     Sa.M <- matrix(rep(Sa,n.sim),nrow=A-AR+1,ncol=n.sim)
     # Prepare outputs
     out <- list()
-    out$AR <- AR
-    out$A <- A
-    out$dt <- dt
-    out$nT <- nT
-    out$R0.vec <- R0
-    out$age <- age
-    out$la <- la
-    out$wa <- wa
-    out$spn <- spn
-    out$fec <- fec
-    out$mat <- mat
-    out$Sa <- Sa
-    out$Minf <- Minf
-    out$lx <- lx
-    out$sel <- sel
-    out$phie <- phie
-    out$R.A <- R.A
-    out$R.B <- R.B
-    out$A.s <- A.s
-    out$B.s <- B.s
-    out$can.a <- can.a
-    out$can.b <- can.b
-    out$M1 <- M1
-    out$Sa.M <- Sa.M
-    out$Ct <- Ct
-    out$Nt <- Nt
-    out$Et <- Et
-    out$nest <- nest
-    out$init.t <- init.t
-    out$n.sim <- n.sim
+    out$input_params <- list(input)
+
+    out$initialized_params <- list()
+
+    out$initialized_params$AR <- AR
+    out$initialized_params$A <- A
+#    out$initialized_params$dt <- dt # dt is input
+    out$initialized_params$nT <- nT
+    out$initialized_params$R0.vec <- R0
+    out$initialized_params$age <- age
+    out$initialized_params$la <- la
+    out$initialized_params$wa <- wa
+    out$initialized_params$spn <- spn
+    out$initialized_params$fec <- fec
+    out$initialized_params$mat <- mat
+    out$initialized_params$Sa <- Sa
+    out$initialized_params$Minf <- Minf
+    out$initialized_params$lx <- lx
+    out$initialized_params$sel <- sel
+    out$initialized_params$phie <- phie
+    out$initialized_params$R.A <- R.A
+    out$initialized_params$R.B <- R.B
+    out$initialized_params$A.s <- A.s
+    out$initialized_params$B.s <- B.s
+    out$initialized_params$can.a <- can.a
+    out$initialized_params$can.b <- can.b
+    out$initialized_params$M1 <- M1
+    out$initialized_params$Sa.M <- Sa.M
+    out$initialized_params$Ct <- Ct
+    out$initialized_params$Nt <- Nt
+    out$initialized_params$Et <- Et
+    out$initialized_params$nest <- nest
+    out$initialized_params$init.t <- init.t
+    # out$initialized_params$n.sim <- n.sim
+
     return(out)
   }

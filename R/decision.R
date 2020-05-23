@@ -15,13 +15,22 @@
   }
   # Convert decision_ info into a readable format
   if(!is.null(decision_csv)){
-    d_info = read_csv(decision_csv)
+    decision_setup = read_csv(decision_csv)
   } else if(!is.null(decision_list)){
     scen_names = names(decision_list)
-    
-    d_info = data.frame(
-      decision_list
+    param_names = names(decision_list[[1]])
+    decision_setup = data.frame(matrix(nrow=length(scen_names), ncol=length(param_names)))
+    colnames(decision_setup) = c("Scenario",param_names)
+    for(s in 1:length(scenNames)){
+      decision_setup[s,1] = scen_names[s]
+      for(i in 1:length(scen_names)){
+        param_name = names(decision_list[[s]][i])
+        param_val = as.numeric(decision_list[[s]][i])
+        decision_setup[s,i] = param_val
+      }
+    }
   }
+
   start <- Sys.time()
 
   dt <- inits$dt
@@ -30,7 +39,7 @@
   nS <- input$nS                   # number of pre-recruit stanzas
   n.gear <- input$n.gear           # number of capture gears applied to recruited animals
   nR0s <- length(R0)
-  scenNames <- values$DF$ScenarioName     # names of scenarios
+  scenNames <- decision_setup$Scenario     # names of scenarios
   tmp.input <- input
 
   output <- data.frame(row.names=scenNames)
@@ -51,17 +60,17 @@
     }
     registerDoParallel(n_cores)
     # Don't know if this will work
-    vals <- force(values)
-    df <- foreach(sn = scenNames, .export = "vals") %dopar% { # .combine = "rbind"
+    decision_setup <- force(decision_setup)
+    df <- foreach(sn = scenNames, .export = "decision_setup") %dopar% { # .combine = "rbind"
       gc()
       ind <- which(scenNames == sn)
       newParams <- list()
       message("Scenario: ",sn)
-      for(c in 2:ncol(vals$DF)){
-        col <- colnames(vals$DF)[c]
+      for(c in 2:ncol(decision_setup)){
+        col <- colnames(decision_setup)[c]
         param.shortname <- substr(col, start=1, stop=regexpr("\\.[0-9]", col, fixed=F)-1)
         param.num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
-        newParams[[param.shortname]][[as.numeric(param.num)]] <- as.numeric(vals$DF[ind,c])
+        newParams[[param.shortname]][[as.numeric(param.num)]] <- as.numeric(decision_setup[ind,c])
       }
       pva <- PVA(input.params = newParams, custom.inits = custom.inits, sens.pcent = sens.pcent, sens.params = sens.params)
       cost.1 <- format(pva$cost.1,big.mark=",",trim=TRUE)

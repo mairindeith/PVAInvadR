@@ -46,12 +46,13 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,
   if(!is.null(custom.inits)){
     inits <- custom.inits
   } else {
-    inits <- init(params)
+    inits <- init(params)$initialized_params
+    # inits <- inits_tmp$initialized_params
   }
   AR <- inits$AR
   A <- inits$A
-  dt <- inits$dt
-  R0 <- inits$R0
+  dt <- params$dt
+  R0 <- inits$R0.vec #!# Is this correct?
   age <- inits$age
   la <- inits$la
   wa <- inits$wa
@@ -230,6 +231,7 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,
   runtime <- Sys.time()-start
   print(runtime)
   out <- list()
+  out$initialized_params <- inits
   out$phie <- phie
   out$R.A <- R.A
   out$R.B <- R.B

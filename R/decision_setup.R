@@ -21,10 +21,6 @@
 decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   gui = T, selected_params = NULL){
   # Identify all possible parameters that could be modified by scenarios
-
-
-
-
   all_params = c(
     paste0("t.start.R.", 1:input$nS),
     paste0("t.start.A.",1:input$n.gear),
@@ -33,18 +29,15 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     paste0("U.R.",1:input$nS),
     paste0("E.A.",1:input$n.gear)
   )
-  # Is it worth converting from a named numbered list to vectors?
+  # Find original values for each parameter
+  all_param_vals = vector(mode = "list", length = length(all_params))
+  names(all_param_vals) = all_params
 
-
-
-  orig_values = list(
-    "t.start.R" = input$t.start.R,
-    "t.start.A" = input$t.start.A,
-    "samp.A" = input$samp.A,
-    "E.R" = input$E.R,
-    "U.R" = input$U.R,
-    "E.A" = input$E.A
-  )
+  for(p in names(all_param_vals)){
+    param.shortname <- substr(p, start=1, stop=regexpr("\\.[0-9]", p, fixed=F)-1)
+    param.num <- as.numeric(substr(p, start=regexpr("\\.[0-9]", p, fixed=F)+1, stop=nchar(p)))
+    all_param_vals[[p]] = get(param.shortname)[param.num]
+  }
 
   if(gui == F){
     # If the GUI does not pop up, selected parameters must be provided.
@@ -88,8 +81,7 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     scen_list = vector("list", length(scen_names)) # Outermost list, named after scenario names
     names(scen_list) = scen_names
     for(n in scen_names){
-      scen_list[[n]] = vector("list", length(selected_params))
-      names(scen_list[[n]]) = selected_params
+      scen_list[[n]] = all_param_vals[names(all_param_vals) %in% selected_params]# Pre-populate with original values
     }
     return(scen_list)
   }
@@ -98,9 +90,11 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
       stop("No csv save path provided, decision_setup() failed.")
       return(NULL)
     }
-    scen_df = data.frame(matrix(nrow=length(scen_names), ncol=length(selected_params)+1))
+    param_vals = unlist(all_param_vals[names(all_param_vals) %in% selected_params]) # Converts to a numeric here
+    scen_df = data.frame(matrix(ncol=length(scen_names), nrow=length(selected_params)), stringsAsFactors=F)
+    scen_df[,] = as.numeric(param_vals)
+    scen_df = data.frame(cbind(scen_names, t(scen_df)), row.names=F)
     colnames(scen_df) = c("Scenario", selected_params)
-    scen_df$Scenario = scen_names
     write_csv(scen_df, csv_file)
   }
 }
