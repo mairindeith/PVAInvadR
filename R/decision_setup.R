@@ -36,7 +36,7 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   for(p in names(all_param_vals)){
     param.shortname <- substr(p, start=1, stop=regexpr("\\.[0-9]", p, fixed=F)-1)
     param.num <- as.numeric(substr(p, start=regexpr("\\.[0-9]", p, fixed=F)+1, stop=nchar(p)))
-    all_param_vals[[p]] = get(param.shortname)[param.num]
+    all_param_vals[[p]] = input[[param.shortname]][param.num]
   }
 
   if(gui == F){

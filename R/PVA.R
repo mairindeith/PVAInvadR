@@ -37,7 +37,8 @@
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' PVA(pva.params = inputParameterList)
 
-PVA <- function(params, inits = NULL, custom.inits = NULL,sens.pcent = NULL, sens.params = NULL, create.plot = FALSE, set.plot.y = NULL, testing=TRUE){
+PVA <- function(params, custom.inits = NULL,sens.pcent = NULL,
+  sens.params = NULL, create.plot = FALSE, set.plot.y = NULL, testing = FALSE){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
 
@@ -191,9 +192,6 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,sens.pcent = NULL, sen
   nyrs <- nT*dt
 
   Nt[is.na(Nt)]<-0
-  cat("dt:\n")
-  cat(dt)
-  cat("\n")
   y.extinct <- sapply(seq(1/dt,nT,1/dt),function(ii)
     length(which(colSums(Nt[ii,,])==0)))
   y.extinct[2:nyrs] <- y.extinct[2:nyrs]-(y.extinct[1:(nyrs-1)])
@@ -201,15 +199,10 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,sens.pcent = NULL, sen
   y.extinct[nyrs] <- n.sim-sum.extinct
   if(is.na(sum.extinct)) y.extinct[nyrs]<-n.sim
   if(sum(y.extinct)<n.sim)y.extinct[nyrs]<-y.extinct[nyrs]+n.sim-sum(y.extinct)
-  cat("y.extinct: \n")
-  cat(y.extinct)
-  cat("\n")
   yext.seq <- rep(1:nyrs,y.extinct)
   y.extinct <- y.extinct / n.sim
-
   # numbers remaining
   NT <- quantile(colSums(Nt[nT,,]),probs=c(0.025,0.5,0.975))
-
   # costs of removal
   x.R <- rep(0,length(q.R))
   x.A <- rep(0,length(q.A))
@@ -260,10 +253,6 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,sens.pcent = NULL, sen
     data <- data.frame(Na)
     names(data) <- rep("y",n.sim)
     data$x <- (1:nT)*dt
-    cat("Plotting PVA results\n...Probability of extirpation after:\n")
-    cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
-    cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
-    cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
     # Pulls in vwReg2
     out$plot <- vwReg2(data=data,input=params,set.ymax=set.plot.y)
   }
