@@ -1,6 +1,6 @@
 # Helper function used by plot_pva
 
-vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set.ymax=TRUE){
+vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set.ymax=NULL){
   dt <- input$dt
   nT <- input$nT*dt
   n.sim <- input$n.sim
@@ -17,7 +17,7 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   flush.console()
   cat("ymax")
   ymax <- as.integer(log10(max(data)))-1
-  ifelse(set.ymax==TRUE,
+  ifelse(is.null(set.ymax),
          ylim <- c(0,as.integer(max(data)/ymax+1)*ymax),
          ylim <- c(0,set.ymax))
   d2 <- plyr::ddply(b2[, c("x", "value")], "x", function(df) { #.(x),
@@ -25,7 +25,7 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
     colnames(res) <- c("y", "dens")
     return(res)
   }, .progress="text")
-  cat("maxdens")
+#  cat("maxdens")
   maxdens <- max(d2$dens,na.rm=TRUE)
   mindens <- min(d2$dens,na.rm=TRUE)
   d2$Density <- (d2$dens - mindens)/maxdens
@@ -37,9 +37,10 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
                                            alpha=alpha.factor)),
                     scale_fill_gradientn("Density\n", colours=palette),
                     scale_alpha_continuous(range=c(0.001, 0.999),guide="none"))
-  cat("Build ggplot figure ...\n")
-  flush.console()
+#  cat("Build ggplot figure ...\n")
+#  flush.console()
   gg.elements <- list(gg.tiles)
-  return(p0 + gg.elements + xlab("Year") + ylab("Recruited population numbers") +
-           theme(text = element_text(size=18), legend.key.height= unit(2,"cm")))
+  pOut = p0 + gg.elements + xlab("Year") + ylab("Recruited population numbers") +
+           theme(text = element_text(size=18), legend.key.height= unit(2,"cm"))
+  return(pOut)
 }

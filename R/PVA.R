@@ -37,9 +37,7 @@
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' PVA(pva.params = inputParameterList)
 
-PVA <- function(params, inits = NULL, custom.inits = NULL,
-  sens.pcent = NULL, sens.params = NULL, create.plot = FALSE,
-  set.plot.y = NULL, testing=TRUE){
+PVA <- function(params, inits = NULL, custom.inits = NULL,sens.pcent = NULL, sens.params = NULL, create.plot = FALSE, set.plot.y = NULL, testing=TRUE){
   start <- Sys.time()
   cat("Calculating population projections ...\n")
 
@@ -51,7 +49,7 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,
   }
   AR <- inits$AR
   A <- inits$A
-  dt <- params$dt
+  dt <- 1/params$dt
   R0 <- inits$R0.vec #!# Is this correct?
   age <- inits$age
   la <- inits$la
@@ -191,18 +189,21 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,
   if( nT >= stps[3] ) p.extinct.200 <- p.extinct[stps[3]]  # probability of extinction in 200 time-steps
   t.extinct <- min(which(p.extinct==1),nT)
   nyrs <- nT*dt
+
   Nt[is.na(Nt)]<-0
+  cat("dt:\n")
+  cat(dt)
+  cat("\n")
   y.extinct <- sapply(seq(1/dt,nT,1/dt),function(ii)
     length(which(colSums(Nt[ii,,])==0)))
   y.extinct[2:nyrs] <- y.extinct[2:nyrs]-(y.extinct[1:(nyrs-1)])
   sum.extinct <- sum(y.extinct)
   y.extinct[nyrs] <- n.sim-sum.extinct
-  if(is.na(sum.extinct)){
-    y.extinct[nyrs] <- n.sim
-  }
-  if(sum(y.extinct) < n.sim){
-    y.extinct[nyrs] <- y.extinct[nyrs]+n.sim-sum(y.extinct)
-  }
+  if(is.na(sum.extinct)) y.extinct[nyrs]<-n.sim
+  if(sum(y.extinct)<n.sim)y.extinct[nyrs]<-y.extinct[nyrs]+n.sim-sum(y.extinct)
+  cat("y.extinct: \n")
+  cat(y.extinct)
+  cat("\n")
   yext.seq <- rep(1:nyrs,y.extinct)
   y.extinct <- y.extinct / n.sim
 
@@ -253,24 +254,19 @@ PVA <- function(params, inits = NULL, custom.inits = NULL,
   out$E.NPV <- E.NPV
   out$NT <- NT
   out$runtime <- runtime
-  if(testing){
-    out$inits = inits
-    return(out)
-  } else {
-    if(create.plot){
-      Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
-      Na <- Na[1:inits$nT,]
-      data <- data.frame(Na)
-      names(data) <- rep("y",n.sim)
-      data$x <- (1:nT)*dt
-      cat("Plotting PVA results\n...Probability of extirpation after:\n")
-      cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
-      cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
-      cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
-      # Pulls in vwReg2
-      out$plot <- vwReg2(data=data,input=inits,set.ymax=set.ymax)
-    }
-    return(out)
+  if(create.plot==T){
+    Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
+    Na <- Na[1:inits$nT,]
+    data <- data.frame(Na)
+    names(data) <- rep("y",n.sim)
+    data$x <- (1:nT)*dt
+    cat("Plotting PVA results\n...Probability of extirpation after:\n")
+    cat("   ",nT/4*dt," years - ",out$p.extinct.50*100,"%\n")
+    cat("   ",nT/2*dt," years - ",out$p.extinct.100*100,"%\n")
+    cat("   ",nT*dt," years - ",out$p.extinct.200*100,"%\n")
+    # Pulls in vwReg2
+    out$plot <- vwReg2(data=data,input=params,set.ymax=set.plot.y)
   }
+  return(out)
   gc()
 }
