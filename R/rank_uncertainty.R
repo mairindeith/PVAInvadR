@@ -1,37 +1,28 @@
 #' Rank proposed PVA decision scenarios when biological parameters are increased or decreased by some percentage.
 #'
-#' @param custom.inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.
-#' @param sens.pcent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
-#' @param direction (Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?
+#' @import
+#' @param percent The percentage by which biological parameters () should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.
+#' @param decision The output from a decision() function call. Provides the basis for comparing rankings of control scenarios.
+#' @param parallel (Optional) Set parallel = TRUE to run analyses using multiple cores, implemented by  Can be useful on multiple-core personal computers.
 
-
-"rank_uncertainty" <- function(percent, base, rank_parallel = F){
-  #!#  # Creates an init to be passed to PVA/decision, modified by "percent" user input
-  #!#  sens.init <- init(p.cent.trans = percent)
-  #!#  # Now that the values have been initialized, can run decision() with inputOnly=T
-  #!#  pva_param_inputs <- decision(inputOnly = T)
-  #!#  pva_output <-
-  #!#  # Make a list of data frames of sensitivity results
-  #!#  #   pre-populated with base if not NULL
-  scenNames <- values$DF$ScenarioName
+rank_uncertainty <- function(percent, decision, parallel = F){
+  scenNames <- decision$scenario.name
   upper.var <- 1+percent
   lower.var <- 1-percent
 
   sens.results <- list()
-  cost.T.base <- as.numeric(gsub(",", "", base[,2]))
-  print("---      Cost base:      ---")
+  cost.T.base <- as.numeric(gsub(",", "", decision[,2]))
+  print("---      Base cost:      ---")
   print(cost.T.base)
-  p.extirp.base <- as.numeric(base[,3])
-  print("---      p(Extirp) base:      ---")
+  p.extirp.base <- as.numeric(decision[,3])
+  print("---      Base p(Extirp):      ---")
   print(p.extirp.base)
-  NT.med.base <- as.numeric(substr(base[,5], start = 1, stop = regexpr(" ", base[,5])-1))
-  print("---      NT.med:      ---")
+  NT.med.base <- as.numeric(substr(decision[,5], start = 1, stop = regexpr(" ", decision[,5])-1))
+  print("---      Base NT.med:    ---")
   print(NT.med.base)
-
   var.par <- c("reck","p.can","A",
                "K","afec",
                "Wmat","Ms","Bs","V1","bet","cann.a","sd.S")
-
   # Parameter labels
   pars <- c(expression(kappa),
               expression(paste("p"["cann"])),
@@ -63,8 +54,8 @@
       message(paste("...Evaluating changes to ", p, "..."))
       ind <- which(var.par == p)
       # Apply upper transformation +X%
-      tmp.inits.upper <- init(input.params = p, p.cent.trans = upper.var)
-      tmp.decision <- as.data.frame(decision(custom.inits = tmp.inits.upper, direction = "upper", sens.pcent = upper.var, sens.params = p, run_parallel=rank_parallel)) #[[1]])
+      tmp.inits.upper <- PVAInvasR::init(input.params = p, p.cent.trans = upper.var)
+      tmp.decision <- as.data.frame(PVAInvasR::decision(custom.inits = tmp.inits.upper, direction = "upper", sens.pcent = upper.var, sens.params = p, run_parallel=parallel)) #[[1]])
       print("Upper:")
       print(tmp.decision)
       cost.T.u[,ind+1] <- as.numeric(gsub(",", "", tmp.decision[,2]))
@@ -75,8 +66,8 @@
       gc()
 
       # Apply lower transformation -X%
-      tmp.inits.lower <- init(input.params = p, p.cent.trans = lower.var)
-      tmp.decision.l <- as.data.frame(decision(custom.inits = tmp.inits.lower, direction = "lower", sens.pcent = lower.var, sens.params = p,run_parallel=rank_parallel))
+      tmp.inits.lower <- PVAInvasR::init(input.params = p, p.cent.trans = lower.var)
+      tmp.decision.l <- as.data.frame(PVAInvasR::decision(custom.inits = tmp.inits.lower, direction = "lower", sens.pcent = lower.var, sens.params = p,run_parallel=parallel))
       print("Lower:")
       print(tmp.decision.l)
       cost.T.l[,ind+1] <- as.numeric(gsub(",", "", tmp.decision.l[,2]))
@@ -101,14 +92,14 @@
     for(df_name in list("cost.T.u", "cost.T.l", "p.extirp.u", "p.extirp.l", "NT.med.u", "NT.med.l")){
       df <- get(df_name)
       rank_df <- data.frame(apply(df, 2, order), row.names = rownames(df))
-      rank <- gather(rank_df)
+      rank <- tidyr::gather(rank_df)
       print(paste0("rank DF ", df_name))
       print(rank)
-      rankdiff <- gather(data.frame(rank_df[,1] - rank_df[,2:ncol(rank_df)]))
+      rankdiff <- tidyr::gather(data.frame(rank_df[,1] - rank_df[,2:ncol(rank_df)]))
       print(paste0("rankdiff DF ", df_name))
       print(rankdiff)
 
-      diff <- gather(data.frame(df[,1] - df[,2:ncol(df)], row.names = rownames(df)))
+      diff <- tidyr::gather(data.frame(df[,1] - df[,2:ncol(df)], row.names = rownames(df)))
       print(paste0("diff DF ", df_name))
       print(diff)
 
@@ -152,9 +143,6 @@
         ind <- ind + 1
       }
     }
-
-#    save(list=unlist(save_list), file = "../rankings.examples2.Rdata")
-#    return()
     # Modify cost so that higher cost = lower ranking
     cost.T.rankdiff.both.mod <- cost.T.rankdiff.both %>%
       mutate(value = value*-1)

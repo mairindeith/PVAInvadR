@@ -5,7 +5,7 @@
 #' @param sens.pcent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param direction (Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?
 
-"decision" <- function(input, decision_csv = NULL, decision_list = NULL, sens.pcent = NULL, direction = NULL, sens.params = NULL, run_parallel = F){ #, save_pva = F){
+decision <- function(input, decision_csv = NULL, decision_list = NULL, sens.pcent = NULL, direction = NULL, sens.params = NULL, run_parallel = F){ #, save_pva = F){
   if(is.null(decision_csv) && is.null(decision_list)){
     stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
     return(NULL)
@@ -83,12 +83,12 @@
       NT.med <- round(pva$NT[2],1)
       NT.ucl <- round(pva$NT[3],1)
       # rm(pva)
-      decision_table <- cbind("Scenario Name" = sn,
-                              "Annual\ncost ($)" = cost.1,
-                              "Total expected\ncost ($)" = cost.T,
-                              "Probability\nof eradication" = p.extirp,
-                              "Expected time \nto eradication (95% quantiles)" = paste0(t.extirp," (", t.extirp.l,", ", t.extirp.u,")"),
-                              "Median abundance\n(95% quantiles)" = paste0(NT.med," (",NT.lcl,", ",NT.ucl,")"))
+      decision_table <- cbind("scenario.name" = sn,
+                              "annual.cost" = cost.1,
+                              "total.expected.cost" = cost.T,
+                              "p.eradication" = p.extirp,
+                              "time.to.eradication.95" = paste0(t.extirp," (", t.extirp.l,", ", t.extirp.u,")"),
+                              "median.abundance.95" = paste0(NT.med," (",NT.lcl,", ",NT.ucl,")"))
       data.frame(decision_table)
     }
   } else {
@@ -105,8 +105,8 @@
       }
       cat(data.frame(newParams))
       pva <- PVA(params = newParams, custom.inits = custom.inits, sens.pcent = sens.pcent, sens.params = sens.params)
-      cat(data.frame(pva$cost.l))
-      cat("\nPVA dopar DONE\n")
+      # cat(data.frame(pva$cost.l))
+      # cat("\nPVA dopar DONE\n")
       cost.1 <- format(pva$cost.1,big.mark=",",trim=TRUE)
       cost.T <- format(pva$E.NPV,big.mark=",",trim=TRUE)
       p.extirp <- round(pva$p.extinct[nT],2)
@@ -119,12 +119,12 @@
       NT.med <- round(pva$NT[2],1)
       NT.ucl <- round(pva$NT[3],1)
       rm(pva)
-      decision_table <- cbind("Scenario Name" = sn,
-                              "Annual\ncost ($)" = cost.1,
-                              "Total expected\ncost ($)" = cost.T,
-                              "Probability\nof eradication" = p.extirp,
-                              "Expected time \nto eradication (95% quantiles)" = paste0(t.extirp," (", t.extirp.l,", ", t.extirp.u,")"),
-                              "Median abundance\n(95% quantiles)" = paste0(NT.med," (",NT.lcl,", ",NT.ucl,")"))
+      decision_table <- cbind("scenario.name" = sn,
+                              "annual.cost" = cost.1,
+                              "total.expected.cost" = cost.T,
+                              "p.eradication" = p.extirp,
+                              "time.to.eradication.95" = paste0(t.extirp," (", t.extirp.l,", ", t.extirp.u,")"),
+                              "median.abundance.95" = paste0(NT.med," (",NT.lcl,", ",NT.ucl,")"))
       data.frame(decision_table)
     }
   }
