@@ -10,24 +10,109 @@ load_pva_parameters <- function(filepath) {
     stop("Please specify the filepath for the input PVA parameters.",
       call. = FALSE)
   }
-  param.list <- list()
-  read.dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
+  # For old versions of parameters that use "." delimiters instead of "_"
+  dot_params <- c(
+      'species',
+      'A',
+      'AR',
+      'nS',
+      'nT',
+      'dt',
+      'n.sim',
+      'n.gear',
+      't.start.R', #
+      't.start.A', #
+      # Population parameters
+      'V0',
+      'reck',
+      'p.can',
+      'K',
+      'afec',
+      'Wmat',
+      't.spn',
+      'Ms',
+      'Bs',
+      'V1',
+      'bet',
+      'cann.a',
+      'sd.S',
+      'UR', #
+      'UA', #
+      'samp.A',
+      'E.R', #
+      'E.A', #
+      'C.f.R', #
+      'C.f.A', #
+      'C.E.R', #
+      'C.E.A', #
+      'r',
+      'G',
+      'v.a', #
+      'v.b', #
+      'v.c', #
+      'v.d', #
+      'init.NA'
+  )
+    # For new versions of pva_template:
+  names(dot_params) <- c(
+      'species',
+      'A',
+      'AR',
+      'nS',
+      'nT',
+      'dt',
+      'n_sim',
+      'n_gear',
+      't_start_R', #
+      't_start_A', #
+      # Population parameters
+      'V0',
+      'reck',
+      'p_can',
+      'K',
+      'afec',
+      'Wmat',
+      't_spn',
+      'Ms',
+      'Bs',
+      'V1',
+      'bet',
+      'cann_a',
+      'sd_S',
+      'UR', #
+      'UA', #
+      'samp_A',
+      'E_R', #
+      'E_A', #
+      'C_f_R', #
+      'C_f_A', #
+      'C_E_R', #
+      'C_E_A', #
+      'r',
+      'G',
+      'v_a', #
+      'v_b', #
+      'v_c', #
+      'v_d', #
+      'init_NA'
+    )
 
-  rename.params <- list('U.R', 'U.A','samp.A','CfR','CfA','ER','EA','CEA','CER','va','vb','vc','vd','tstartA','tstartR') #,'t.start.A','E.R','E.A')
-  names(rename.params) <- c('UR', 'UA','sampA','C.f.R','C.f.A','E.R','E.A','C.E.A','C.E.R','v.a','v.b','v.c','v.d','t.start.A','t.start.R') #, 'tstartA','ER','EA')
-  params <- read.dat$Parameter
+  param_list <- list()
+  read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
+
+  params <- read_dat$Parameter
   for(p in 1:length(params)){
-    param.name <- params[p]
-    if(param.name %in% rename.params){
-      rename.index <- which(rename.params == param.name)
-      param.name <- names(rename.params)[rename.index]
+    param_name <- params[p]
+    if(param_name %in% dot_params){
+      rename_idx <- which(dot_params == param_name)
+      param_name <- names(dot_params)[rename_idx]
     }
-    if(param.name == "species"){
-      param.value <- read.dat[p,2]
+    if(param_name == "species"){
+      param_value <- read_dat[p,2]
     } else {
-      param.value <- suppressWarnings(as.numeric(unlist(strsplit(read.dat[p,2], split=";"))))
+      param_value <- suppressWarnings(as.numeric(unlist(strsplit(read_dat[p,2], split=";"))))
     }
-    param.list[[param.name]] <- param.value
+    param_list[[param_name]] <- param_value
   }
-  return(param.list)
+  return(param_list)
 }

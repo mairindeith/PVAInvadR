@@ -7,47 +7,47 @@
 #' pva_template('~/Documents/PVA_Examples/parameter_template.csv')
 
 pva_template <- function(file){
-  param_names <<- c(
+  param_names <- c(
       'species',
       'A',
       'AR',
       'nS',
       'nT',
       'dt',
-      'n.sim',
-      'n.gear',
-      't.start.R', #
-      't.start.A', #
+      'n_sim',
+      'n_gear',
+      't_start_R', #
+      't_start_A', #
       # Population parameters
       'V0',
       'reck',
-      'p.can',
+      'p_can',
       'K',
       'afec',
       'Wmat',
-      't.spn',
+      't_spn',
       'Ms',
       'Bs',
       'V1',
       'bet',
-      'cann.a',
-      'sd.S',
+      'cann_a',
+      'sd_S',
       'UR', #
       'UA', #
-      'samp.A',
-      'E.R', #
-      'E.A', #
-      'C.f.R', #
-      'C.f.A', #
-      'C.E.R', #
-      'C.E.A', #
+      'samp_A',
+      'E_R', #
+      'E_A', #
+      'C_f_R', #
+      'C_f_A', #
+      'C_E_R', #
+      'C_E_A', #
       'r',
       'G',
-      'v.a', #
-      'v.b', #
-      'v.c', #
-      'v.d', #
-      'init.NA'
+      'v_a', #
+      'v_b', #
+      'v_c', #
+      'v_d', #
+      'init_NA'
     )
     notes <<- c(
       'Species abbreviation',

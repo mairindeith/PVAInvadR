@@ -22,21 +22,21 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   gui = T, selected_params = NULL){
   # Identify all possible parameters that could be modified by scenarios
   all_params = c(
-    paste0("t.start.R.", 1:input$nS),
-    paste0("t.start.A.",1:input$n.gear),
-    paste0("samp.A.",1:input$n.gear),
-    paste0("E.R.",1:input$nS),
-    paste0("U.R.",1:input$nS),
-    paste0("E.A.",1:input$n.gear)
+    paste0("t_start_R_", 1:input$nS),
+    paste0("t_start_A_",1:input$n_gear),
+    paste0("samp_A_",1:input$n_gear),
+    paste0("E_R_",1:input$nS),
+    paste0("U_R_",1:input$nS),
+    paste0("E_A_",1:input$n_gear)
   )
   # Find original values for each parameter
   all_param_vals = vector(mode = "list", length = length(all_params))
   names(all_param_vals) = all_params
 
   for(p in names(all_param_vals)){
-    param.shortname <- substr(p, start=1, stop=regexpr("\\.[0-9]", p, fixed=F)-1)
-    param.num <- as.numeric(substr(p, start=regexpr("\\.[0-9]", p, fixed=F)+1, stop=nchar(p)))
-    all_param_vals[[p]] = input[[param.shortname]][param.num]
+    param_shortname <- substr(p, start=1, stop=regexpr("\\.[0-9]", p, fixed=F)-1)
+    param_num <- as.numeric(substr(p, start=regexpr("\\.[0-9]", p, fixed=F)+1, stop=nchar(p)))
+    all_param_vals[[p]] = input[[param_shortname]][param_num]
   }
 
   if(gui == F){
@@ -44,12 +44,12 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     if(is.null(selected_params)){
       stop("If gui = FALSE, which parameters to vary between scenarios must be provided as a vector of characters, selected_params.")
       return(NULL)
-    } else if(selected_params == "all"){
+    } else if(c(selected_params)[1] == "all"){
       selected_params = all_params
     } else { # if(!is.null(selected_params))
       # If selected_parameters are not NULL, are they in the set?
       # Check to see if the parameters in selected_params are valid:
-      diffs = selected_params[!(which(selected_params %in% all_params))]
+      diffs = c(selected_params)[!(which(selected_params %in% all_params))]
       if(!identical(diffs, character(0))){
         stop("Parameter names in selected_params not valid. decision_setup() failed.")
         return(NULL)
@@ -58,21 +58,21 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   } else { # if(gui == T)
     param_desc=c(
       paste0("Time-step to begin sampling pre-recruits, stanza ",1:input$nS,
-        " (t.start.R.",1:input$nS,")"),
-      paste0("Time-step to begin sampling adults, gear ",1:input$n.gear,
-        " (t.start.A.",1:input$n.gear,")"),
-      paste0("Time-step in the year that gear ",1:input$n.gear,
-        " is fished (samp.A.",1:input$n.gear,")"),
+        " (t_start_R_",1:input$nS,")"),
+      paste0("Time-step to begin sampling adults, gear ",1:input$n_gear,
+        " (t_start_A_",1:input$n_gear,")"),
+      paste0("Time-step in the year that gear ",1:input$n_gear,
+        " is fished (samp_A_",1:input$n_gear,")"),
       paste0("Effort expended by each pre-recruit sampling gear, stanza ",
-        1:input$nS," (E.R.",1:input$nS,")"),
+        1:input$nS," (E_R_",1:input$nS,")"),
       paste0("Proportion of pre-recruits removed with 1 unit of effort, stanza ",
-        1:input$nS," (U.R.",1:input$nS,")"),
+        1:input$nS," (U_R_",1:input$nS,")"),
       paste0("Effort expended by each adult sampling gear, gear ",
-        1:input$n.gear," (E.A.",1:input$n.gear,")")
+        1:input$n_gear," (E_A_",1:input$n_gear,")")
     )
     selected_params = select.list(all_params, multiple = T,
       title = "Select the parameters to vary between scenarios")
-    if(length(selected_params) == 0){
+    if(length(c(selected_params)) == 0){
       stop("No parameters selected, decision_setup() failed.")
       return(NULL)
     }
