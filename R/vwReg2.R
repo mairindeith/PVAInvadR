@@ -1,4 +1,5 @@
 # Helper function used by plot_pva
+#' @import ggplot2
 
 vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set.ymax=NULL){
   dt <- input$dt
@@ -10,7 +11,7 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   colnames(b2) <- c("index", "rep", "value", "x")
   # Construct ggplot
   # All plot elements are constructed as a list, so they can be added to an existing ggplot
-  p0 <- ggplot2::ggplot(data, ggplot2::aes_string(x=data$x, y=data$y)) + ggplot2::theme_bw()
+  p0 <- ggplot2::ggplot(data, aes_string(x=data$x, y=data$y)) + theme_bw()
   # initialize elements with NULL (if they are defined, they are overwritten with something meaningful)
   gg.tiles <- NULL
   cat("Computing density estimates for each vertical cut ...\n")
@@ -35,8 +36,8 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   d2$alpha.factor <- d2$Density^shade.alpha
   gg.tiles <-  list(ggplot2::geom_tile(data=d2, aes(x=x, y=y, fill=Density,
                                            alpha=alpha.factor)),
-                    scale_fill_gradientn("Density\n", colours=palette),
-                    scale_alpha_continuous(range=c(0.001, 0.999),guide="none"))
+                    ggplot2::scale_fill_gradientn("Density\n", colours=palette),
+                    ggplot2::scale_alpha_continuous(range=c(0.001, 0.999),guide="none"))
 #  cat("Build ggplot figure ...\n")
 #  flush.console()
   gg.elements <- list(gg.tiles)

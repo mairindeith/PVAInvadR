@@ -86,15 +86,15 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     return(scen_list)
   }
   if(csv==T){
-    if(is.null(csv_file)){
+    if(is.null(csv_path)){
       stop("No csv save path provided, decision_setup() failed.")
       return(NULL)
     }
     param_vals = unlist(all_param_vals[names(all_param_vals) %in% selected_params]) # Converts to a numeric here
     scen_df = data.frame(matrix(ncol=length(scen_names), nrow=length(selected_params)), stringsAsFactors=F)
     scen_df[,] = as.numeric(param_vals)
-    scen_df = data.frame(cbind(scen_names, t(scen_df)), row.names=F)
-    colnames(scen_df) = c("Scenario", selected_params)
-    write_csv(scen_df, csv_file)
+    scen_df = data.frame(cbind(scen_names, t(scen_df)))
+    colnames(scen_df) = c("scenario", selected_params)
+    readr::write_csv(scen_df, csv_path)
   }
 }

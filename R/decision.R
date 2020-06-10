@@ -67,10 +67,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, sens.pcen
         param.num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
         newParams[[param.shortname]][[as.numeric(param.num)]] <- as.numeric(decision_setup[ind,c])
       }
-      cat(newParams)
+      # cat(newParams)
       pva <- PVA(params = newParams, custom.inits = custom.inits, sens.pcent = sens.pcent, sens.params = sens.params)
-      cat(data.frame(pva$cost.l))
-      cat("\nPVA dopar DONE\n")
+      # cat(data.frame(pva$cost.l))
+      # cat("\nPVA dopar DONE\n")
       cost.1 <- format(pva$cost.1,big.mark=",",trim=TRUE)
       cost.T <- format(pva$E.NPV,big.mark=",",trim=TRUE)
       p.extirp <- round(pva$p.extinct[nT],2)
@@ -103,7 +103,7 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, sens.pcen
         param.num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
         newParams[[param.shortname]][[as.numeric(param.num)]] <- as.numeric(decision_setup[ind,c])
       }
-      cat(data.frame(newParams))
+      # cat(data.frame(newParams))
       pva <- PVA(params = newParams, custom.inits = custom.inits, sens.pcent = sens.pcent, sens.params = sens.params)
       # cat(data.frame(pva$cost.l))
       # cat("\nPVA dopar DONE\n")
