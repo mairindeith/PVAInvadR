@@ -36,8 +36,8 @@ load_pva_parameters <- function(filepath) {
       'bet',
       'cann.a',
       'sd.S',
-      'UR', #
-      'UA', #
+      'U.R', #
+      'U.A', #
       'samp.A',
       'E.R', #
       'E.A', #
@@ -79,8 +79,8 @@ load_pva_parameters <- function(filepath) {
       'bet',
       'cann_a',
       'sd_S',
-      'UR', #
-      'UA', #
+      'U_R', #
+      'U_A', #
       'samp_A',
       'E_R', #
       'E_A', #
@@ -99,7 +99,9 @@ load_pva_parameters <- function(filepath) {
 
   param_list <- list()
   read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
-
+  if(read_dat$dt > 1){
+      read_dat$dt <- 1/read_dat$dt
+  }
   params <- read_dat$Parameter
   for(p in 1:length(params)){
     param_name <- params[p]

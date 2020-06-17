@@ -34,8 +34,8 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   names(all_param_vals) = all_params
 
   for(p in names(all_param_vals)){
-    param_shortname <- substr(p, start=1, stop=regexpr("\\.[0-9]", p, fixed=F)-1)
-    param_num <- as.numeric(substr(p, start=regexpr("\\.[0-9]", p, fixed=F)+1, stop=nchar(p)))
+    param_shortname <- substr(p, start=1, stop=regexpr("\\_[0-9]", p, fixed=F)-1)
+    param_num <- as.numeric(substr(p, start=regexpr("\\_[0-9]", p, fixed=F)+1, stop=nchar(p)))
     all_param_vals[[p]] = input[[param_shortname]][param_num]
   }
 
@@ -51,6 +51,7 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
       # Check to see if the parameters in selected_params are valid:
       diffs = c(selected_params)[!(which(selected_params %in% all_params))]
       if(!identical(diffs, character(0))){
+        print(diffs)
         stop("Parameter names in selected_params not valid. decision_setup() failed.")
         return(NULL)
       }
