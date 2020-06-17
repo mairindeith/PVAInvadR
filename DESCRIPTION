@@ -24,3 +24,7 @@ Imports:
     cowplot,
     doParallel,
     parallel
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
