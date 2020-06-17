@@ -11,7 +11,8 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   colnames(b2) <- c("index", "rep", "value", "x")
   # Construct ggplot
   # All plot elements are constructed as a list, so they can be added to an existing ggplot
-  p0 <- ggplot2::ggplot(data, aes_string(x=data$x, y=data$y)) + theme_bw()
+  p0 <- ggplot2::ggplot(data, ggplot2::aes_string(x=data$x, y=data$y)) + ggplot2::theme_bw()
+  # p0 <- ggplot2::ggplot(data, x=x, y=y) + theme_bw()
   # initialize elements with NULL (if they are defined, they are overwritten with something meaningful)
   gg.tiles <- NULL
   cat("Computing density estimates for each vertical cut ...\n")
@@ -34,14 +35,14 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   ## Tile approach
   shade.alpha = 0.1
   d2$alpha.factor <- d2$Density^shade.alpha
-  gg.tiles <-  list(ggplot2::geom_tile(data=d2, aes(x=x, y=y, fill=Density,
+  gg.tiles <-  list(ggplot2::geom_tile(data=d2, ggplot2::aes(x=x, y=y, fill=Density,
                                            alpha=alpha.factor)),
                     ggplot2::scale_fill_gradientn("Density\n", colours=palette),
                     ggplot2::scale_alpha_continuous(range=c(0.001, 0.999),guide="none"))
 #  cat("Build ggplot figure ...\n")
 #  flush.console()
   gg.elements <- list(gg.tiles)
-  pOut = p0 + gg.elements + xlab("Year") + ylab("Recruited population numbers") +
-           theme(text = element_text(size=18), legend.key.height= unit(2,"cm"))
+  pOut = p0 + gg.elements + ggplot2::xlab("Year") + ggplot2::ylab("Recruited population numbers") +
+           ggplot2::theme(text = ggplot2::element_text(size=18), legend.key.height=ggplot2::unit(2,"cm"))
   return(pOut)
 }
