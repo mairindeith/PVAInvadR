@@ -1,9 +1,10 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
+#' @import ggplot2
 #' @import tidyr
-#' @param params A list of initialized population and control parameters to inform the PVA_ Parameters should be provided in the form of a named list_ We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
-#' @param custom_inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pvA_params}. Should be a named list_ Can be be outputs of the \code{init()} function from \code{PVAInvas}.
-#' @param sens_percent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
-#' @param create_plot (Optional) Should a ggplot heatmap object also be provided? Default: false. Will return a list with the final entry being the created plot_
+#' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
+#' @param custom_inits (Optional, invoked by the `rank_uncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pvA_params}. Should be a named list_ Can be be outputs of the \code{init()} function from \code{PVAInvas}.
+#' @param sens_percent (Optional, invoked by the `rank_uncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
+#' @param create_plot (Optional) Should a ggplot heatmap object also be provided? Default: false. Will return a list with the final entry being the created plot.
 #' @return pva
 #' * A named list of PVA outputs, including calculated parameters (from init())
 #'   and outputs of the PVA_
@@ -35,7 +36,7 @@
 #'
 #' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
-#' PVA(pvA_params = inputParameterList)
+#' PVA(pva_params = inputParameterList)
 
 PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, testing = FALSE){
@@ -86,7 +87,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   U_A <- params$U_A # vector()                  # proportion of recruited animals removed per gear
   q_R <- params$q_R # vector()                  # catchability of gear used to remove fish from each pre-recruit stanza
   q_A <- params$q_A # vector()                  # catchability of gear used to remove recruited animals
-  N_gear <- params$N_gear           # number of capture gears applied to recruited animals
+  n_gear <- params$n_gear           # number of capture gears applied to recruited animals
   t_start_R <- params$t_start_R # vector()            # time-step when sampling begins for each pre-recruit stanza
   t_start_A <- params$t_start_A # vector()            # time-step when sampling begins for each gear used on recruited animals
   E_R <- params$E_R # vector()                  # effort per time-step used to remove fish from each pre-recruit stanza
@@ -128,13 +129,13 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   q_R <- -log(1-U_R)
   q_A <- -log(1-U_A)*V1^bet
 
-  W_st <- rnorm(nT*n_sim,0,sd.S)
+  W_st <- rnorm(nT*n_sim,0,sd_S)
   anom <- matrix(data=exp(W_st),nrow=nT,ncol=n_sim)              # survival anomolies for each stanza
   go_R <- matrix(rep(0,nT*nS),nrow=nS)
   for(i in 1:nS)
     go_R[i,t_start_R[i]:nT] <- 1
-  go_A <- matrix(rep(0,nT*N_gear),nrow=N_gear)
-  for(i in 1:N_gear)
+  go_A <- matrix(rep(0,nT*n_gear),nrow=n_gear)
+  for(i in 1:n_gear)
     go_A[i,t_start_A[i]:nT] <- 1
 
   # dynamics for subsequent years
@@ -155,10 +156,10 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
     Ct[t,1:nS] <- rowSums(Ct_st)
     Nt[t,AR,] <- N_st[nS+1,]                # numbers surviving through all stanzas become recruits to the population
 
-    Ct_A <- array(dim=c(N_gear,A-AR+1,n_sim))
+    Ct_A <- array(dim=c(n_gear,A-AR+1,n_sim))
     Ft_A <- list()
     Vt <- colSums(Nt[t-1,AR:A,])
-    for(i in 1:N_gear){
+    for(i in 1:n_gear){
       q_N <- q_A[i]*pmax(1,Vt)^(-bet)
       if(t*dt-as.integer(t*dt)==samp_A[i]){
         Ft_A[[i]] <- go_A[i,t]*(E_A[i]*sel[i,] %o% q_N)
@@ -168,7 +169,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
     }
     Ft <- Reduce('+',Ft_A)
     Zt <- Ft - log(Sa_M)
-    for(i in 1:N_gear){
+    for(i in 1:n_gear){
       Ct[t,nS+i] <- sum(Nt[t-1,AR:A,] * Ft_A[[i]]/Zt * ( 1 - exp( -Zt)))
     }
     # Get through the loop?
@@ -184,7 +185,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   p_extinct_200 <- NA
   stps <- as.integer(nT/c(4,2,1))
   p_extinct <- sapply(1:nT, function(ii)
-    length(which(colSums(Nt[ii,,],nA_rm=TRUE)==0))/n_sim) ## calculate p_extinct by time-step
+    length(which(colSums(Nt[ii,,],na.rm=TRUE)==0))/n_sim) ## calculate p_extinct by time-step
   if( nT >= stps[1] ) p_extinct_50 <- p_extinct[stps[1]]     # probability of extinction in 50 time-steps
   if( nT >= stps[2] ) p_extinct_100 <- p_extinct[stps[2]]  # probability of extinction in 100 time-steps
   if( nT >= stps[3] ) p_extinct_200 <- p_extinct[stps[3]]  # probability of extinction in 200 time-steps
@@ -208,8 +209,8 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   x_A <- rep(0,length(q_A))
   x_R[which(E_R>0)] <- 1
   x_A[which(E_A>0)] <- 1
-  cost_1 <- sum(E_R*C_E__R) + sum(C_f_R[x_R]) +
-    sum(E_A*C_E__A) + sum(C_f_A[x_A])
+  cost_1 <- sum(E_R*C_E_R) + sum(C_f_R[x_R]) +
+    sum(E_A*C_E_A) + sum(C_f_A[x_A])
   y_ext <- t_extinct*dt
   cost_T <- mean(cost_1*(1:nyrs)*y_extinct)
   t_st <- (t_start_R[1]-1)*dt+1
@@ -248,9 +249,9 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   out$NT <- NT
   out$runtime <- runtime
   if(create_plot==T){
-    Na <- apply(Nt,MARGIN=c(1,3),sum,nA_rm=TRUE)
+    Na <- apply(Nt,MARGIN=c(1,3),sum,na.rm=TRUE)
     Na <- Na[1:inits$nT,]
-    data <- datA_frame(Na)
+    data <- data.frame(Na)
     names(data) <- rep("y",n_sim)
     data$x <- (1:nT)*dt
     # Pulls in vwReg2

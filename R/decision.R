@@ -4,22 +4,29 @@
 #' @param input
 #' @param decision_csv
 #' @param decision_list
+#
+#       !!!!!!!!
 #' @param custom_inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.
+#' @param sens_percent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters
 #' @param sens_percent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param direction (Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?
+#       !!!!!!!! (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
+#
+#' @param parallel (Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")
+#' @param pretty (Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.
 
-decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, run_parallel = F){ #, save_pva = F){
+decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F){ #, save_pva = F){
   if(is.null(decision_csv) && is.null(decision_list)){
     stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
     return(NULL)
   }
   # Convert decision_ info into a readable format
   if(!is.null(decision_csv)){
-    decision_setup = readr::read_csv(decision_csv)
+    decision_setup = readr::read_csv(decision_csv, col_types = readr::cols())
   } else if(!is.null(decision_list)){
     scen_names = names(decision_list)
     param_names = names(decision_list[[1]])
-    decision_setup = data.frame(matrix(nrow=length(scen_names), ncol=length(param_names)+1))
+    decision_setup = as.data.frame(matrix(nrow=length(scen_names), ncol=length(param_names)+1))
     for(s in 1:length(scen_names)){
       decision_setup[s,1] = scen_names[s]
       for(i in 1:length(param_names)){
@@ -30,47 +37,86 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       }
     }
   }
-
   start <- Sys.time()
-
-  dt <- 1/input$dt
-  R0 <- input$R0.vec
-  nT <- input$nT                   # number of time-steps
-  nS <- input$nS                   # number of pre-recruit stanzas
-  n_gear<- input$n_gear          # number of capture gears applied to recruited animals
-  nR0s <- length(R0)
-  scenNames <- decision_setup$scenario     # names of scenarios
-  tmp_input <- input
-
-  output <- data.frame(row.names=scenNames)
-  cost_1 <- list()
-  cost_T <- list()
-  p_extirp <- list()
-  t_extirp <- list()
-  t_extirp_u <- list()
-  t_extirp_l <- list()
-  Nt_lcl <- list()
-  Nt_med <- list()
-  Nt_ucl <- list()
-
-  if(run_parallel == T){
+  scenNames <- decision_setup$scenario
+  if(parallel == T){
     n_cores <- parallel::detectCores() - 1
     if(is.na(n_cores)){
       n_cores <- 1
     }
     doParallel::registerDoParallel(n_cores)
     df <- foreach::foreach(sn = scenNames, .export = "decision_setup", .combine = "rbind") %dopar% {
-      ind <- which(scenNames == sn)
-      newParams <- list()
+      sn_idx <- which(scenNames == sn)
+      scenParams <- inputs # for each scenario, copy the existing inputs and modify as needed
+      message("Scenario ",sn_idx, ": ", sn)
+      for(col_idx in 2:ncol(decision_setup)){
+        col <- colnames(decision_setup)[col_idx]
+        param_shortname <- substr(col, start=1, stop=regexpr("\\_[0-9]", col, fixed=F)-1)
+        message("...param: ", param_shortname)
+        param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
+        scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,col_idx])
+      }
+      pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
+      if(pretty==T){
+        cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
+        cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
+        p_extirp <- round(pva$p_extinct[nT],2)
+        t_extirp <- round(mean(pva$yext_seq),0)
+        t_extirp_l <- round(min(pva$yext_seq),0)
+        ifelse(max(pva$yext_seq)==nT*dt,
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
+        Nt_lcl <- round(pva$NT[1],1)
+        Nt_med <- round(pva$NT[2],1)
+        Nt_ucl <- round(pva$NT[3],1)
+        decision_table <- cbind(
+          "Scenario Name" = sn,
+          "Annual\ncost ($)" = paste0("$",cost_1),
+          "Total expected\ncost ($)" = paste0("$",cost_T),
+          "Probability\nof eradication" = p_extirp,
+          "Expected time \nto eradication (95% quantiles)" = paste0(t_extirp," (", t_extirp_l,", ", t_extirp_u,")"),
+          "Median abundance\n(95% quantiles)" = paste0(Nt_med," (",Nt_lcl,", ",Nt_ucl,")")
+        )
+      } else {
+        cost_1 <- pva$cost_1
+        cost_T <- pva$cost_T
+        p_extirp <- pva$p_extinct[nT]
+        t_extirp <- mean(pva$yext_seq)
+        t_extirp_l <- min(pva$yext_seq)
+        ifelse(max(pva$yext_seq)==nT*dt,
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
+        Nt_lcl <- pva$NT[1]
+        Nt_med <- pva$NT[2]
+        Nt_ucl <- pva$NT[3]
+        decision_table <- cbind(
+          "scenario_name" = sn,
+          "annual_cost" = cost_1,
+          "total_expected_cost" = cost_T,
+          "p_eradication" =  p_extirp,
+          "time_to_eradication_mean" = t_extirp,
+          "time_to_eradication_2.5" = t_extirp_l,
+          "time_to_eradication_97.5" = t_extirp_u,
+          "median_abundance" = Nt_med,
+          "median_abundance_2.5" = Nt_lcl,
+          "median_abundance_97.5" = Nt_ucl
+        )
+      }
+      data.frame(decision_table)
+    }
+  } else {
+    df <- foreach(sn = scenNames, .combine = "rbsn_idx") %do% {
+      sn_idx <- which(scenNames == sn)
+      scenParams <- inputs
       message("Scenario: ",sn)
       for(c in 2:ncol(decision_setup)){
         col <- colnames(decision_setup)[c]
         param_shortname <- substr(col, start=1, stop=regexpr("\\.[0-9]", col, fixed=F)-1)
         param_num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
-        newParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[ind,c])
+        scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,c])
       }
-      pva <- PVA(params = newParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
-      cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
+      pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
+      cost_l <- format(pva$cost_1, big.mark=",", trim=TRUE)
       cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
       p_extirp <- round(pva$p_extinct[nT],2)
       t_extirp <- round(mean(pva$yext_seq),0)
@@ -81,51 +127,15 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       Nt_lcl <- round(pva$NT[1],1)
       Nt_med <- round(pva$NT[2],1)
       Nt_ucl <- round(pva$NT[3],1)
-      # rm(pva)
       decision_table <- cbind("scenario_name" = sn,
-                              "annual_cost" = cost_1,
-                              "total_expected_cost" = cost_T,
-                              "p_eradication" = p_extirp,
-                              "time_to_eradication_95" = paste0(t_extirp," (", t_extirp_l,", ", t_extirp_u,")"),
-                              "median_abundance_95" = paste0(Nt_med," (",Nt_lcl,", ",Nt_ucl,")"))
-      data.frame(decision_table)
-    }
-  } else {
-    df <- foreach(sn = scenNames, .combine = "rbind") %do% { # .combine = "rbind"
-      gc()
-      ind <- which(scenNames == sn)
-      newParams <- list()
-      message("Scenario: ",sn)
-      for(c in 2:ncol(decision_setup)){
-        col <- colnames(decision_setup)[c]
-        param_shortname <- substr(col, start=1, stop=regexpr("\\.[0-9]", col, fixed=F)-1)
-        param_num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
-        newParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[ind,c])
-      }
-      # cat(data.frame(newParams))
-      pva <- PVA(params = newParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
-      # cat(data.frame(pva$cost_l))
-      # cat("\nPVA dopar DONE\n")
-      cost_1 <- format(pva$cost_1,big.mark=",",trim=TRUE)
-      cost_T <- format(pva$E_NPV,big.mark=",",trim=TRUE)
-      p_extirp <- round(pva$p_extinct[nT],2)
-      t_extirp <- round(mean(pva$yext_seq),0)
-      t_extirp_l <- round(min(pva$yext_seq),0)
-      ifelse(max(pva$yext_seq)==nT*dt,
-             t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"),
-             t_extirp_u <- paste0(round(max(pva$yext_seq),0)))
-      Nt_lcl <- round(pva$NT[1],1)
-      Nt_med <- round(pva$NT[2],1)
-      Nt_ucl <- round(pva$NT[3],1)
-      rm(pva)
-      decision_table <- cbind("scenario_name" = sn,
-                              "annual_cost" = cost_1,
-                              "total_expected_cost" = cost_T,
-                              "p_eradication" = p_extirp,
+                              "annual_cost" = pva$cost_1,
+                              "total_expected_cost" = pva$cost_T,
+                              "p_eradication" =  p_extirp,
                               "time_to_eradication_95" = paste0(t_extirp," (", t_extirp_l,", ", t_extirp_u,")"),
                               "median_abundance_95" = paste0(Nt_med," (",Nt_lcl,", ",Nt_ucl,")"))
       data.frame(decision_table)
     }
   }
+  row.names(df) <- NULL
   return(df)
-  }
+}
