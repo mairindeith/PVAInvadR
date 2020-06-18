@@ -52,18 +52,18 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       for(col_idx in 2:ncol(decision_setup)){
         col <- colnames(decision_setup)[col_idx]
         param_shortname <- substr(col, start=1, stop=regexpr("\\_[0-9]", col, fixed=F)-1)
-        message("...param: ", param_shortname)
         param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,col_idx])
+        message("...param: ", param_shortname, "[", param_num,"] = ", decision_setup[sn_idx,col_idx])
       }
       pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
         cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
-        p_extirp <- round(pva$p_extinct[nT],2)
+        p_extirp <- round(pva$p_extinct[input$nT],2)
         t_extirp <- round(mean(pva$yext_seq),0)
         t_extirp_l <- round(min(pva$yext_seq),0)
-        ifelse(max(pva$yext_seq)==nT*dt,
+        ifelse(max(pva$yext_seq)==input$nT*input$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- round(pva$NT[1],1)
@@ -80,10 +80,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       } else {
         cost_1 <- pva$cost_1
         cost_T <- pva$cost_T
-        p_extirp <- pva$p_extinct[nT]
+        p_extirp <- pva$p_extinct[input$nT]
         t_extirp <- mean(pva$yext_seq)
         t_extirp_l <- min(pva$yext_seq)
-        ifelse(max(pva$yext_seq)==nT*dt,
+        ifelse(max(pva$yext_seq)==input$nT*input$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- pva$NT[1]
@@ -105,23 +105,23 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       data.frame(decision_table)
     }
   } else {
-    df <- foreach(sn = scenNames, .combine = "rbsn_idx") %do% {
+    df <- foreach(sn = scenNames, .combine = "rbind") %do% {
       sn_idx <- which(scenNames == sn)
       scenParams <- inputs
       message("Scenario: ",sn)
       for(c in 2:ncol(decision_setup)){
         col <- colnames(decision_setup)[c]
-        param_shortname <- substr(col, start=1, stop=regexpr("\\.[0-9]", col, fixed=F)-1)
-        param_num <- substr(col, start=regexpr("\\.[0-9]", col, fixed=F)+1, stop=nchar(col))
+        param_shortname <- substr(col, start=1, stop=regexpr("\\_[0-9]", col, fixed=F)-1)
+        param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,c])
       }
       pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
       cost_l <- format(pva$cost_1, big.mark=",", trim=TRUE)
       cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
-      p_extirp <- round(pva$p_extinct[nT],2)
+      p_extirp <- round(pva$p_extinct[input$nT],2)
       t_extirp <- round(mean(pva$yext_seq),0)
       t_extirp_l <- round(min(pva$yext_seq),0)
-      ifelse(max(pva$yext_seq)==nT*dt,
+      ifelse(max(pva$yext_seq)==input$nT*input$dt,
              t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"),
              t_extirp_u <- paste0(round(max(pva$yext_seq),0)))
       Nt_lcl <- round(pva$NT[1],1)

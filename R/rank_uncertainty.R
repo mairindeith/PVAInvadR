@@ -1,27 +1,38 @@
 #' Rank proposed PVA decision scenarios when biological parameters are increased or decreased by some percentage.
 #'
-#' @param percent The percentage by which biological parameters () should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.
+#' @param percent The percentage by which biological parameters ( ) should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.
 #' @param decision The output from a decision() function call. Provides the basis for comparing rankings of control scenarios.
-#' @param parallel (Optional) Set parallel = TRUE to run analyses using multiple cores, implemented by  Can be useful on multiple-core personal computers.
+#' @param parallel (Optional) Set parallel = TRUE to run analyses using multiple cores.
 
-rank_uncertainty <- function(percent, base_decision, parallel = F){
+rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_list = NULL, parallel = FALSE){
+  message("Running base decision scenario (biological parameters at original values)")
+  base_decision <- suppressMessages(PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, parallel = parallel, pretty = F))
+
   scenNames <- base_decision$scenario_name
   upper_var <- 1+percent
   lower_var <- 1-percent
-
+  message(paste0(rep("-", 40)))
   sens_results <- list()
-  cost_T_base <- as.numeric(gsub(",", "", base_decision[,2]))
-  print("---      Base cost:      ---")
-  print(cost_T_base)
-  p_extirp_base <- as.numeric(base_decision[,3])
-  print("---      Base p(Extirp):      ---")
-  print(p_extirp_base)
-  Nt_med_base <- as.numeric(substr(base_decision[,5], start = 1, stop = regexpr(" ", base_decision[,5])-1))
-  print("---      Base NT_med:    ---")
-  print(Nt_med_base)
-  var.par <- c("reck","p.can","A",
-               "K","afec",
-               "Wmat","Ms","Bs","V1","bet","cann.a","sd.S")
+  message("Base costs: \n   ", paste0("Scenario ", scenNames, ": ", base_decision$annual_cost, "\n   "))
+  message("Base probabilities of extirpation: \n   ", paste0("Scenario ", scenNames, ": ", base_decision$p_eradication, "\n   "))
+  message("Base median abundances (Nt): \n   ", paste0("Scenario ", scenNames, ": ", base_decision$median_abundance, "\n   "))
+  cost_T_base <- base_decision$annual_cost
+  p_extirp_base <- base_decision$p_eradication
+  Nt_med_base <- base_decision$median_abundance
+  # Jun 17 Debugging:
+  ### Indicates functional parameters that do not cause errors
+  # Indicates "no loop for break/next, jumping to top level"
+  var_par <- c(### "reck","p_can",
+               # "A",
+               ### "K","afec",
+               ### "Wmat",
+               #"Ms",
+               # "Bs",
+               ### "V1",
+               ### "bet",
+               ### "cann_a",
+               ### "sd_S"
+               )
   # Parameter labels
   pars <- c(expression(kappa),
               expression(paste("p"["cann"])),
@@ -30,11 +41,7 @@ rank_uncertainty <- function(percent, base_decision, parallel = F){
               expression(paste("a"["f"])),
               expression(paste("W"["m"])),
               expression(paste({"M"^{"*"}}["s"])),
-              #            expression(paste({"M"^{"*"}}["s,1"])),
-              #            expression(paste({"M"^{"*"}}["s,2"])),
               expression(paste({"B"^{"*"}}["s"])),
-              #            expression(paste({"B"^{"*"}}["s,1"])),
-              #            expression(paste({"B"^{"*"}}["s,2"])),
               expression(paste("V"[1])),
               expression(beta),
               expression(paste("cann"["a"])),
@@ -48,59 +55,62 @@ rank_uncertainty <- function(percent, base_decision, parallel = F){
       base = p_extirp_base)
     Nt_med_u <- Nt_med_l <- data.frame(
       base = Nt_med_base)
-
-    for(p in var.par){
-      message(paste("...Evaluating changes to ", p, "..."))
-      ind <- which(var.par == p)
+    for(p in var_par){
+      message("\n", paste0(rep("-", 40)))
+      message(paste("--- EVALUATING CHANGES TO ", p, " --- "))
+      message(paste0(rep("-", 40)), "\n")
+      ind <- which(var_par == p)
       # Apply upper transformation +X%
-      tmp_inits_upperpper <- PVAInvasR::init(input.params = p, p.cent.trans = upper_var)
-      tmp_decision <- as.data.frame(PVAInvasR::decision(custom_inits = tmp_inits_upperpper, direction = "upper", sens_pcent = upper_var, sens_params = p, run_parallel=parallel)) #[[1]])
-      print("Upper:")
-      print(tmp_decision)
-      cost_T_u[,ind+1] <- as.numeric(gsub(",", "", tmp_decision[,2]))
-      p_extirp_u[,ind+1] <- as.numeric(tmp_decision[,3])
-      Nt_med_u[,ind+1] <- as.numeric(substr(tmp_decision[,5], start = 1, stop = regexpr(" ", tmp_decision[,5])-1))
-      colnames(cost_T_u)[ind+1] <- colnames(p_extirp_u)[ind+1] <- colnames(Nt_med_u)[ind+1] <- p
-      rm(tmp_decision)
-      gc()
+      tmp_inits_upper <- suppressMessages(PVAInvasR::init(input, input_params = p, pcent_trans = upper_var))
+      tmp_decision_upper <- suppressMessages(PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_upper, direction = "upper", sens_percent = upper_var, sens_params = p, parallel = parallel))
 
+      cost_T_u[,ind+1] <- tmp_decision_upper$annual_cost
+      p_extirp_u[,ind+1] <- tmp_decision_upper$p_eradication
+      Nt_med_u[,ind+1] <- tmp_decision_upper$median_abundance
+      colnames(cost_T_u)[ind+1] <- colnames(p_extirp_u)[ind+1] <- colnames(Nt_med_u)[ind+1] <- p
+      message("--- Increase ", p, " by ", percent*100, "% --- ")
+      message("New costs: \n      ", paste0("Scenario ", scenNames, ": ", tmp_decision_upper$annual_cost, "\n      "))
+      message("New p(Extirpation)s: \n      ", paste0("Scenario ", scenNames, ": ", tmp_decision_upper$p_eradication, "\n      "))
+      message("New median abundance (Nt): \n      ", paste0("Scenario ", scenNames, ": ", tmp_decision_upper$median_abundance, "\n      "))
+
+      rm(tmp_decision_upper)
+      gc()
       # Apply lower transformation -X%
-      tmp_inits_lower <- PVAInvasR::init(input.params = p, p.cent.trans = lower_var)
-      tmp_decision_lower <- as.data.frame(PVAInvasR::decision(custom_inits = tmp_inits_lower, direction = "lower", sens_pcent = lower_var, sens_params = p,run_parallel=parallel))
-      print("Lower:")
-      print(tmp_decision_lower)
-      cost_T_l[,ind+1] <- as.numeric(gsub(",", "", tmp_decision_lower[,2]))
-      p_extirp_l[,ind+1] <- as.numeric(tmp_decision_lower[,3])
-      Nt_med_l[,ind+1] <- as.numeric(substr(tmp_decision_lower[,5], start = 1, stop = regexpr(" ", tmp_decision_lower[,5])-1))
+      tmp_inits_lower <- suppressMessages(PVAInvasR::init(input, input_params = p, pcent_trans = lower_var))
+      tmp_decision_lower <- suppressMessages(PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_lower, direction = "lower", sens_percent = lower_var, sens_params = p, parallel = parallel))
+      cost_T_l[,ind+1] <- tmp_decision_lower$annual_cost
+      p_extirp_l[,ind+1] <- tmp_decision_lower$p_eradication
+      Nt_med_l[,ind+1] <- tmp_decision_lower$median_abundance
       colnames(cost_T_l)[ind+1] <- colnames(p_extirp_l)[ind+1] <- colnames(Nt_med_l)[ind+1] <- p
+
+      message("--- Decrease ", p, " by ", percent*100, "% --- ")
+      message("New costs:", paste0(" \n      Scenario ", scenNames, ": ", tmp_decision_lower$annual_cost))
+      message("New p(Extirpation):", paste0(" \n      Scenario ", scenNames, ": ", tmp_decision_lower$p_eradication))
+      message("New median abundance (Nt):", paste0("\n      Scenario ", scenNames, ": ", tmp_decision_lower$median_abundance))
+
       rm(tmp_decision_lower)
       gc()
     }
-
+    message(paste0(rep("-", 40)))
     rownames(cost_T_u) <- rownames(cost_T_l) <-
       rownames(p_extirp_u) <- rownames(p_extirp_l) <-
       rownames(Nt_med_u) <- rownames(Nt_med_l) <-
       scenNames
-    print("---          Post-sensitivity DF         ---")
-    print("--- Cost (upper) ---")
-    print(cost_T_u)
-    print("--- Cost (lower) ---")
-    print(cost_T_l)
 
     # Create ranked and difference ranked data frames
     for(df_name in list("cost_T_u", "cost_T_l", "p_extirp_u", "p_extirp_l", "Nt_med_u", "Nt_med_l")){
       df <- get(df_name)
       rank_df <- data.frame(apply(df, 2, order), row.names = rownames(df))
       rank <- tidyr::gather(rank_df)
-      print(paste0("rank DF ", df_name))
-      print(rank)
+      message(paste0("Ranked DF ", df_name))
+      message(rank)
       rankdiff <- tidyr::gather(data.frame(rank_df[,1] - rank_df[,2:ncol(rank_df)]))
-      print(paste0("rankdiff DF ", df_name))
-      print(rankdiff)
+      message(paste0("Rankdiff DF ", df_name))
+      message(rankdiff)
 
       diff <- tidyr::gather(data.frame(df[,1] - df[,2:ncol(df)], row.names = rownames(df)))
-      print(paste0("diff DF ", df_name))
-      print(diff)
+      message(paste0("Diff DF ", df_name))
+      message(diff)
 
       rank$scen <- paste0("Scenario: ",rownames(df))
       rankdiff$scen <- paste0("Scenario: ",rownames(df))

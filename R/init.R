@@ -3,9 +3,9 @@
 #'
 
 init <- function(input, input_params = NULL, pcent_trans = NULL){
-    #!#
+    #'
     start <- Sys.time()
-    cat("Initializing populations ...\n")
+    message("Initializing populations ...\n")
     if(!is.null(pcent_trans)){
       stopifnot(!is.null(input_params))
       pFact <- pcent_trans
@@ -14,7 +14,12 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
       pFact <- 1.0
     }
     # dt <- input$dt
-    dt <- 1/input$dt               # time-step in years
+    if(input$dt > 1){
+      dt <- 1/input$dt
+    } else {
+      dt <- input$dt
+    }               # time-step in years
+    # message("Init dt: ", dt)
     R0 <- input$R0                 # unfished equilibrium recruitment
     # TRY:
     V0 <- input$V0
@@ -31,9 +36,9 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     cann_a <- input$cann_a         # age at which cannibalism on pre-recruits begins
     bet <- input$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
     sd_S <- input$sd_S             # standard deviation of environmental effect on survival
-    init_Na <- vector()            # initial age-structure in the event those data exist
+    init_NA <- vector()            # initial age-structure in the event those data exist
 
-    nT <- input$nT/dt                # number of R0time-steps
+    nT <- input$nT/dt                # number of R0 time-steps
     nS <- input$nS                   # number of pre-recruit stanzas
     AR <- input$AR/dt                # age at recruitment in time-steps
     n_sim <- input$n_sim             # number of simulations
@@ -58,6 +63,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     C_E_R <- vector()
     C_E_A <- vector()
     for(i in 1:nS){
+      # warning("...i in 1:nS - 61 - ...")
       Ms[i] <- input$Ms[i]
       Bs[i] <- input$Bs[i]
       U_R[i] <- input$U_R[i]
@@ -78,13 +84,16 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
       v_c[i] <- input$v_c[i]
       v_d[i] <- input$v_d[i]
     }
-
+    warn_counter <- 0
     for(i in input$AR:input$A){
       j <- i-input$AR+1
-      init_try <- try(init_Na[j] <- input$init_NA[j])
+      init_try <- try(init_NA[j] <- input$init_NA[j])
       if (class(init_try) == "try-error") {
-        cat("Caught an error reading init NAs, applying default `NA` value.\n")
-        init_Na[j] <- "NA"
+        warn_counter <- warn_counter + 1
+        if(warn_counter == 1){
+          warning("Caught an error reading init NAs, applying default `NA` value.\n")
+        }
+        init_NA[j] <- "NA"
       }
     }
 
@@ -113,7 +122,6 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
         suppressWarnings(assign(params, newval))
       }
     }
-
     U_R <- pmin(U_R,0.999999999)
     U_A <- pmin(U_A,0.999999999)
     q_R <- -log(1-U_R)
@@ -169,7 +177,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     Nt <- array(rep(0,(nT+AR)*A*n_sim),dim=c((nT+AR),A,n_sim))   # numbers at time and age for each simulation
     init_t <- rep(0,A-AR+1)
     init_t[which(age==as.integer(age))] <- 1
-    ifelse(is.na(init_Na[1]),{
+    ifelse(is.na(init_NA[1]),{
       can_a_star <- -log(R_A)*(1-p_can)
       can_b_star <- -log(R_A)*p_can/V
       Ntmp <- matrix(data=c(rep(1e-15,n_sim),rep(0,(A-AR)*n_sim)),nrow=A-AR+1,ncol=n_sim,byrow=TRUE)
@@ -202,7 +210,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
       })
     },{
       N1tmp<-rep(0,A-AR+1)
-      N1tmp[which(init_t==1)]<-init_Na
+      N1tmp[which(init_t==1)]<-init_NA
       Ntmp <- matrix(rep(N1tmp,n_sim),nrow=n_sim,
                      ncol=A-AR+1,byrow=TRUE)
       Nt[1,AR:A,] <- t(Ntmp)
@@ -229,7 +237,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
 
     out$initialized_params$AR <- AR
     out$initialized_params$A <- A
-#    out$initialized_params$dt <- dt # dt is input
+    out$initialized_params$dt <- dt # dt is input
     out$initialized_params$nT <- nT
     out$initialized_params$R0_vec <- R0
     out$initialized_params$age <- age
@@ -257,6 +265,5 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     out$initialized_params$nest <- nest
     out$initialized_params$init_t <- init_t
     # out$initialized_params$n_sim <- n_sim
-
     return(out)
   }

@@ -96,7 +96,6 @@ load_pva_parameters <- function(filepath) {
       'v_d', #
       'init_NA'
     )
-
   param_list <- list()
   read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
   params <- read_dat$Parameter

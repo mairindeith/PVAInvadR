@@ -36,22 +36,21 @@
 #'
 #' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
-#' PVA(pva_params = inputParameterList)
+#' pva(pva_params = inputParameterList)
 
 PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, testing = FALSE){
   start <- Sys.time()
-  cat("Calculating population projections ...\n")
+  message("Calculating population projections ...\n")
 
   if(!is.null(custom_inits)){
-    inits <- custom_inits
+    inits <- custom_inits$initialized_params
   } else {
     inits <- init(params)$initialized_params
-    # inits <- inits_tmp$initialized_params
   }
   AR <- inits$AR
   A <- inits$A
-  dt <- 1/params$dt
+  dt <- inits$dt
   R0 <- inits$R0_vec #!# Is this correct?
   age <- inits$age
   la <- inits$la
@@ -75,7 +74,6 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   Nt <- inits$Nt
   Et <- inits$Et
   nest <- inits$nest
-
   nT <- inits$nT                   # number of time-steps
   nS <- params$nS                   # number of pre-recruit stanzas
   n_sim <- params$n_sim             # number of simulations
@@ -110,12 +108,11 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   cann_a <- params$cann_a         # age at which cannibalism on pre-recruits begins
   bet <- params$bet               # rate at which invasives disperse with abundance (between 0 (none) and greater)
   sd_S <- params$sd_S             # standard deviation of environmental effect on survival
-
   # Apply this when testing sensitivity to biological parameters
   if(!is.null(sens_params)){
     # Skip modification of parameters if these are already in inits
     if(sens_params %in% names(inits) | sens_params %in% c("Bs","Ms")){
-      print("Pass")
+      next
     } else {
       stopifnot(!is.null(sens_percent))
       o.value <- get(sens_params)
@@ -123,7 +120,6 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
       assign(paste0(sens_params), neW_val)
     }
   }
-
   U_R <- pmin(U_R,0.999999999)
   U_A <- pmin(U_A,0.999999999)
   q_R <- -log(1-U_R)
@@ -132,11 +128,13 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   W_st <- rnorm(nT*n_sim,0,sd_S)
   anom <- matrix(data=exp(W_st),nrow=nT,ncol=n_sim)              # survival anomolies for each stanza
   go_R <- matrix(rep(0,nT*nS),nrow=nS)
-  for(i in 1:nS)
+  for(i in 1:nS){
     go_R[i,t_start_R[i]:nT] <- 1
+  }
   go_A <- matrix(rep(0,nT*n_gear),nrow=n_gear)
-  for(i in 1:n_gear)
+  for(i in 1:n_gear){
     go_A[i,t_start_A[i]:nT] <- 1
+  }
 
   # dynamics for subsequent years
   for(t in 2:nT){
@@ -173,7 +171,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
       Ct[t,nS+i] <- sum(Nt[t-1,AR:A,] * Ft_A[[i]]/Zt * ( 1 - exp( -Zt)))
     }
     # Get through the loop?
-#      if(t<16) cat(t," F\n",Ft[,1],"\nZt",Zt[,1],"\nSa",exp(-Zt[1:(A-AR),1]),"\n")
+#      if(t<16) message(t," F\n",Ft[,1],"\nZt",Zt[,1],"\nSa",exp(-Zt[1:(A-AR),1]),"\n")
     Nt[t,(AR+1):A,] <- matrix(rbinom((A-AR)*n_sim,Nt[t-1,AR:(A-1),],exp(-Zt[1:(A-AR),])),ncol=n_sim)
     pairs <- matrix(as.integer(Nt[t,AR:A,]/2),ncol=n_sim)
     Et[t,] <- as.integer(colSums(sweep(pairs,MARGIN=1,fec*spn,'*')))
@@ -224,7 +222,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   E_NPV <- mean(NPV)
 
   runtime <- Sys.time()-start
-  print(runtime)
+  # message(runtime)
   out <- list()
   out$initialized_params <- inits
   out$phie <- phie
