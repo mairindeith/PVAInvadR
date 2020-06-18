@@ -99,9 +99,6 @@ load_pva_parameters <- function(filepath) {
 
   param_list <- list()
   read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
-  if(read_dat$dt > 1){
-      read_dat$dt <- 1/read_dat$dt
-  }
   params <- read_dat$Parameter
   for(p in 1:length(params)){
     param_name <- params[p]
