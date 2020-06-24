@@ -39,14 +39,15 @@
 #' pva(pva_params = inputParameterList)
 
 PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
-  sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, testing = FALSE){
+  sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, quiet = FALSE){
   start <- Sys.time()
-  message("Calculating population projections ...\n")
-
+  if(!quiet){
+    message("Calculating population projections ...\n")
+  }
   if(!is.null(custom_inits)){
     inits <- custom_inits$initialized_params
   } else {
-    inits <- init(params)$initialized_params
+    inits <- init(params, quiet = quiet)$initialized_params
   }
   AR <- inits$AR
   A <- inits$A
@@ -111,9 +112,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   # Apply this when testing sensitivity to biological parameters
   if(!is.null(sens_params)){
     # Skip modification of parameters if these are already in inits
-    if(sens_params %in% names(inits) | sens_params %in% c("Bs","Ms")){
-      next
-    } else {
+    if(!(sens_params %in% names(inits) | sens_params %in% c("Bs","Ms"))){
       stopifnot(!is.null(sens_percent))
       o.value <- get(sens_params)
       neW_val <- o.value*sens_percent

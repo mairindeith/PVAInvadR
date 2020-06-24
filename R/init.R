@@ -1,13 +1,13 @@
-#' Initialize parameters for use in a \code{pva()} simulated run; called by the \code{pva()} function.
-#'
-#'
+#' Initialize parameters from input parameters. This converts parameters into a form to be used by PVA.
+#'    Does not need to be called by the user, instead is called by several user-facing functions in the PVAInvadR suite
 
-init <- function(input, input_params = NULL, pcent_trans = NULL){
-    #'
+init <- function(input, input_params = NULL, pcent_trans = NULL, quiet = F){
     start <- Sys.time()
-    message("Initializing populations ...\n")
+    if(quiet == F){
+      message("Initializing populations ...\n")
+    }
     if(!is.null(pcent_trans)){
-      stopifnot(!is.null(input_params))
+      # stopifnot(!is.null(input_params))
       pFact <- pcent_trans
     }
     if(is.null(pcent_trans)) {
@@ -19,9 +19,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     } else {
       dt <- input$dt
     }               # time-step in years
-    # message("Init dt: ", dt)
     R0 <- input$R0                 # unfished equilibrium recruitment
-    # TRY:
     V0 <- input$V0
     reck <- input$reck             # recruitment compensation ratio
     p_can <- input$p_can           # proportion of recruit mortality at equilibrium due to cannibalism
@@ -119,7 +117,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
         } else {
           newval <- o_value * pFact
         }
-        suppressWarnings(assign(params, newval))
+        assign(params, newval)
       }
     }
     U_R <- pmin(U_R,0.999999999)
@@ -231,7 +229,7 @@ init <- function(input, input_params = NULL, pcent_trans = NULL){
     Sa_M <- matrix(rep(Sa,n_sim),nrow=A-AR+1,ncol=n_sim)
     # Prepare outputs
     out <- list()
-    out$input_params <- list(input)
+    out$input_params <- input
 
     out$initialized_params <- list()
 

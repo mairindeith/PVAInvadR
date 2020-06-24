@@ -15,7 +15,7 @@
 #' @param parallel (Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")
 #' @param pretty (Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.
 
-decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F){ #, save_pva = F){
+decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F, quiet = F){ #, save_pva = F){
   if(is.null(decision_csv) && is.null(decision_list)){
     stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
     return(NULL)
@@ -48,15 +48,19 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
     df <- foreach::foreach(sn = scenNames, .export = "decision_setup", .combine = "rbind") %dopar% {
       sn_idx <- which(scenNames == sn)
       scenParams <- inputs # for each scenario, copy the existing inputs and modify as needed
-      message("Scenario ",sn_idx, ": ", sn)
+      if(quiet == F){
+        message("Scenario ",sn_idx, ": ", sn)
+      }
       for(col_idx in 2:ncol(decision_setup)){
         col <- colnames(decision_setup)[col_idx]
         param_shortname <- substr(col, start=1, stop=regexpr("\\_[0-9]", col, fixed=F)-1)
         param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,col_idx])
-        message("...param: ", param_shortname, "[", param_num,"] = ", decision_setup[sn_idx,col_idx])
+        if(quiet == F){
+          message("...param: ", param_shortname, "[", param_num,"] = ", decision_setup[sn_idx,col_idx])
+        }
       }
-      pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
+      pva <- PVAInvasR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
         cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
@@ -108,14 +112,16 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
     df <- foreach(sn = scenNames, .combine = "rbind") %do% {
       sn_idx <- which(scenNames == sn)
       scenParams <- inputs
-      message("Scenario: ",sn)
+      if(quiet == F){
+        message("Scenario: ",sn)
+      }
       for(c in 2:ncol(decision_setup)){
         col <- colnames(decision_setup)[c]
         param_shortname <- substr(col, start=1, stop=regexpr("\\_[0-9]", col, fixed=F)-1)
         param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,c])
       }
-      pva <- PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params)
+      pva <- PVAInvasR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
       cost_l <- format(pva$cost_1, big.mark=",", trim=TRUE)
       cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
       p_extirp <- round(pva$p_extinct[input$nT],2)
