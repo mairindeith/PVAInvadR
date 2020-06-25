@@ -93,20 +93,20 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
         Nt_lcl <- pva$NT[1]
         Nt_med <- pva$NT[2]
         Nt_ucl <- pva$NT[3]
-        decision_table <- cbind(
+        decision_table <- data.frame(
           "scenario_name" = sn,
-          "annual_cost" = cost_1,
-          "total_expected_cost" = cost_T,
-          "p_eradication" =  p_extirp,
-          "time_to_eradication_mean" = t_extirp,
-          "time_to_eradication_2.5" = t_extirp_l,
-          "time_to_eradication_97.5" = t_extirp_u,
-          "median_abundance" = Nt_med,
-          "median_abundance_2.5" = Nt_lcl,
-          "median_abundance_97.5" = Nt_ucl
+          "annual_cost" = as.numeric(cost_1),
+          "total_expected_cost" = as.numeric(cost_T),
+          "p_eradication" =  as.numeric(p_extirp),
+          "time_to_eradication_mean" = as.numeric(t_extirp),
+          "time_to_eradication_2.5" = as.numeric(t_extirp_l),
+          "time_to_eradication_97.5" = as.numeric(t_extirp_u),
+          "median_abundance" = as.numeric(Nt_med),
+          "median_abundance_2.5" = as.numeric(Nt_lcl),
+          "median_abundance_97.5" = as.numeric(Nt_ucl)
         )
       }
-      data.frame(decision_table)
+      decision_table
     }
   } else {
     df <- foreach(sn = scenNames, .combine = "rbind") %do% {
@@ -121,25 +121,52 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
         param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,c])
       }
-      pva <- PVAInvasR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
-      cost_l <- format(pva$cost_1, big.mark=",", trim=TRUE)
-      cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
-      p_extirp <- round(pva$p_extinct[input$nT],2)
-      t_extirp <- round(mean(pva$yext_seq),0)
-      t_extirp_l <- round(min(pva$yext_seq),0)
-      ifelse(max(pva$yext_seq)==input$nT*input$dt,
-             t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"),
-             t_extirp_u <- paste0(round(max(pva$yext_seq),0)))
-      Nt_lcl <- round(pva$NT[1],1)
-      Nt_med <- round(pva$NT[2],1)
-      Nt_ucl <- round(pva$NT[3],1)
-      decision_table <- cbind("scenario_name" = sn,
-                              "annual_cost" = pva$cost_1,
-                              "total_expected_cost" = pva$cost_T,
-                              "p_eradication" =  p_extirp,
-                              "time_to_eradication_95" = paste0(t_extirp," (", t_extirp_l,", ", t_extirp_u,")"),
-                              "median_abundance_95" = paste0(Nt_med," (",Nt_lcl,", ",Nt_ucl,")"))
-      data.frame(decision_table)
+      if(pretty==T){
+        cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
+        cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
+        p_extirp <- round(pva$p_extinct[input$nT],2)
+        t_extirp <- round(mean(pva$yext_seq),0)
+        t_extirp_l <- round(min(pva$yext_seq),0)
+        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
+        Nt_lcl <- round(pva$NT[1],1)
+        Nt_med <- round(pva$NT[2],1)
+        Nt_ucl <- round(pva$NT[3],1)
+        decision_table <- cbind(
+          "Scenario Name" = sn,
+          "Annual\ncost ($)" = paste0("$",cost_1),
+          "Total expected\ncost ($)" = paste0("$",cost_T),
+          "Probability\nof eradication" = p_extirp,
+          "Expected time \nto eradication (95% quantiles)" = paste0(t_extirp," (", t_extirp_l,", ", t_extirp_u,")"),
+          "Median abundance\n(95% quantiles)" = paste0(Nt_med," (",Nt_lcl,", ",Nt_ucl,")")
+        )
+      } else {
+        cost_1 <- pva$cost_1
+        cost_T <- pva$cost_T
+        p_extirp <- pva$p_extinct[input$nT]
+        t_extirp <- mean(pva$yext_seq)
+        t_extirp_l <- min(pva$yext_seq)
+        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
+          t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
+        Nt_lcl <- pva$NT[1]
+        Nt_med <- pva$NT[2]
+        Nt_ucl <- pva$NT[3]
+        decision_table <- data.frame(
+          "scenario_name" = sn,
+          "annual_cost" = as.numeric(cost_1),
+          "total_expected_cost" = as.numeric(cost_T),
+          "p_eradication" =  as.numeric(p_extirp),
+          "time_to_eradication_mean" = as.numeric(t_extirp),
+          "time_to_eradication_2.5" = as.numeric(t_extirp_l),
+          "time_to_eradication_97.5" = as.numeric(t_extirp_u),
+          "median_abundance" = as.numeric(Nt_med),
+          "median_abundance_2.5" = as.numeric(Nt_lcl),
+          "median_abundance_97.5" = as.numeric(Nt_ucl)
+        )
+      }
+      decision_table
     }
   }
   row.names(df) <- NULL
