@@ -17,7 +17,7 @@ ggplot_sensitivity <- function(df, ylimit = NaN){
             #            expression(paste({"B"^{"*"}}["s,2"])),
             expression(paste("V"[1])),
             expression(beta),
-            expression(paste("cann"["a"])),
+            # expression(paste("cann"["a"])),
             expression(paste(sigma["R"])))
   if(is.na(ylimit)){
     rec_y <- max(abs(df$value))+(0.2*max(abs(df$value)))

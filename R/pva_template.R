@@ -94,10 +94,10 @@ pva_template <- function(file){
       'Initial age structure in the population (default is NA; separate age-specific population sizes with ";")'
     )
 
-    file_out <<- data.frame(
+    file_out <- data.frame(
       Parameters = param_names,
       values = "",
       Description = notes
     )
-    write_csv(file_out, file)
+    readr::write_csv(file_out, file)
 }

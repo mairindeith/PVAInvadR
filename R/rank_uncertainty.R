@@ -40,20 +40,6 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
                # "cann_a",
                "sd_S"
                )
-
-  # Parameter labels
-  pars <- c(expression(kappa),
-              expression(paste("p"["cann"])),
-              expression("A"),
-              expression("K"),
-              expression(paste("a"["f"])),
-              expression(paste("W"["m"])),
-              expression(paste({"M"^{"*"}}["s"])),
-              expression(paste({"B"^{"*"}}["s"])),
-              expression(paste("V"[1])),
-              expression(beta),
-              # expression(paste("cann"["a"])),
-              expression(paste(sigma["R"])))
     ### vary parameters
     # one row per scenario
     # Unique data frames for upper (u) and lower (l) uncertainty modification
