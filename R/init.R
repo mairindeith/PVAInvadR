@@ -117,6 +117,13 @@ init <- function(input, input_params = NULL, pcent_trans = NULL, quiet = F){
         } else {
           newval <- o_value * pFact
         }
+        if(params %in% c("p_can", "Wmat")){
+          if(newval > 1){
+            newval <- 1
+          } else if(newval < 0){
+            newval <- 0
+          }
+        }
         assign(params, newval)
       }
     }
