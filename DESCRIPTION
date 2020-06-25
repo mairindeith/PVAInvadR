@@ -1,4 +1,4 @@
-Package: PVAInvasR
+Package: PVAInvadR
 Type: Package
 Title: PVA to assess invasive species control methods.
 Version: 0.1.0
@@ -24,7 +24,7 @@ Imports:
     cowplot,
     doParallel,
     parallel
-Suggests: 
+Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
