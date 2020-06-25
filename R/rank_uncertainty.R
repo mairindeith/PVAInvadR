@@ -30,13 +30,14 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
   var_par <- c("reck",
                "p_can",
                "A",
-               "K","afec",
+               "K",
+               "afec",
                "Wmat",
                "Ms",
                "Bs",
                "V1",
                "bet",
-               "cann_a",
+               # "cann_a",
                "sd_S"
                )
 
@@ -51,7 +52,7 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
               expression(paste({"B"^{"*"}}["s"])),
               expression(paste("V"[1])),
               expression(beta),
-              expression(paste("cann"["a"])),
+              # expression(paste("cann"["a"])),
               expression(paste(sigma["R"])))
     ### vary parameters
     # one row per scenario
@@ -113,17 +114,9 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
     for(df_name in list("cost_T_u", "cost_T_l", "p_extirp_u", "p_extirp_l", "Nt_med_u", "Nt_med_l")){
       df <- get(df_name)
       rank_df <- data.frame(apply(df, 2, order), row.names = rownames(df))
-      rank <- tidyr::gather(rank_df)
-      # print(paste0("rank DF ", df_name))
-      # print(rank)
-      rankdiff <- tidyr::gather(data.frame(rank_df[,1] - rank_df[,2:ncol(rank_df)]))
-      # print(paste0("rankdiff DF ", df_name))
-      # print(rankdiff)
-
-      diff <- tidyr::gather(data.frame(as.numeric(as.character(df[,1])) - as.numeric(as.character(df[,2:ncol(df)]))))
-      # print(paste0("diff DF ", df_name))
-      # print(diff)
-
+      rank <- data.frame(tidyr::gather(rank_df))
+      rankdiff <- tidyr::gather(rank_df[,1] - rank_df[,2:ncol(rank_df)])
+      diff <- tidyr::gather(df[,1] - df[,2:ncol(df)])
       rank$scen <- paste0("Scenario: ",rownames(df))
       rankdiff$scen <- paste0("Scenario: ",rownames(df))
       diff$scen <- paste0("Scenario: ",rownames(df))
@@ -132,8 +125,6 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
       } else {
         rank$direction <- diff$direction <- rankdiff$direction <- paste0("+",percent)
       }
-      #    save(list="rank", file = "../rankdf.RData")
-
       assign(paste0(df_name, "_rank"), rank)
       assign(paste0(df_name, "_rankdiff"), rankdiff)
       assign(paste0(df_name, "_diff"), diff)
@@ -154,7 +145,6 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
             both_tmp$new_x[r] <- both_tmp$xbase[r] - 0.2
           }
         }
-        # Create numeric x-axis for each parameter
         assign(paste0(cat,"_",type,"_both"), both_tmp)
         save_list[[ind]] <- paste0(cat, "_u_", type)
         ind <- ind + 1
