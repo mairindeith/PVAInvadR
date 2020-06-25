@@ -14,6 +14,140 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(PVAInvasR)
+## Installing the Package
+
+`PVAInvadR` is available from a public GitHub repository.
+To install it, you need to install and use the `devtools` package.
+
+If not yet installed, first install the `devtools` package.
+
+```{r install_devtools, eval = F}
+install.packages("devtools")
+```
+
+Once installed, load the library so you can access its functions.
+
+```{r lib_devtools}
+library(devtools)
+```
+
+Then, download and load `PVAInvadR`.
+
+```{r install_pva}
+devtools::install_github("mairindeith/PVAInvadR")
+library(PVAInvadR)
+```
+
+## Input PVA parameters
+
+**P**opulation **V**iability **A**nalysis (PVA) requires two types of parameters.
+
+1. **Biological parameters** that describe the species impacted by controls, and
+2. **Control parameters** that describe the controls (e.g. fishing gear types) and their impact on the target species.
+
+Save a fillable template .csv using the `pva_template()` function.
+
+```{r pva_template}
+pva_template("path_to_template.csv")
+```
+The template includes names of parameters needed by `PVAInvadR`, a blank column to be filled with parameter values, and a brief description of the parameter's meaning.
+For multi-value parameters (e.g. parameters specific to different stanzas or control gears), these values should be separated by a `;`.
+
+Open the .csv, here are the first few rows:
+
+```{r echo=F}
+library(knitr)
+param_names <- c(
+    'species',
+    'A',
+    'AR',
+    'nS',
+    'nT',
+    'dt',
+    'n_sim',
+    'n_gear',
+    't_start_R', #
+    't_start_A', #
+    # Population parameters
+    'V0',
+    'reck',
+    'p_can',
+    'K',
+    'afec',
+    'Wmat',
+    't_spn',
+    'Ms',
+    'Bs',
+    'V1',
+    'bet',
+    'cann_a',
+    'sd_S',
+    'UR', #
+    'UA', #
+    'samp_A',
+    'E_R', #
+    'E_A', #
+    'C_f_R', #
+    'C_f_A', #
+    'C_E_R', #
+    'C_E_A', #
+    'r',
+    'G',
+    'v_a', #
+    'v_b', #
+    'v_c', #
+    'v_d', #
+    'init_NA'
+  )
+  notes <<- c(
+    'Species abbreviation',
+    'Maximum age (only 1% of fish survive when unfished)',
+    'Age at recruitment (years)',
+    'Number of pre-recruit stanzas',
+    'Length of simulation (number of years)',
+    'Time-step length as a proportion of one year (<1 means more than 1 time step per year)',
+    'Number of simulations',
+    'Number of gears applied to recruited animals',
+    'Time-step when removal starts for each pre-recruit stanza (separate stanza-specific parameters with ";")',
+    'Time-step when removal starts for each gear used on recruited animals (separate gear-specific parameters with ";")',
+    'Range of unfished recruited abundance (separate lower and upper range with ";")',
+    'Recruitment compensation ratio (difference in juvenile survival between unfished and near-zero density)',
+    'Proportion of mortality at equilibrium that is due to cannibalism',
+    'von Bertalanffy growth parameter',
+    'Fecundity multiplier on weight',
+    'Minimum weight at maturity (as a proportion of maximum weight)',
+    'Time-steps of the year when spawning occurs (inclusive of the upper time step; i.e. a range of 1-2 indicates that spawning occurs in the first and second time steps)',
+    'Maximum survival by stanza (separate stanza-specific parameters with ";")',
+    'Stanza-specific maximum available habitat (separate stanza-specific parameters with ";")',
+    'Initial number of vulnerable fish in the population',
+    'Hyperstability parameter',
+    'Age at which cannibalism begins',
+    'Standard deviation in recruitment across years',
+    'Proportion of pre-recruit animals removed by gear (proportion caught per unit effort; separate stanza-specific parameters with ";")',
+    'Proportion of recruited animals removed by gear (proportion caught per unit effort; separate gear-specific parameters with ";")',
+    'Time step(s) in the year that each gear is fished (enter "1" if there is only 1 time step per year; separate gear-specific parameters with ";")',
+    'Effort expended by each pre-recruit capture gear (separate gear-specific parameters with ";")',
+    'Effort expended by each recruit capture gear (separate gear-specific parameters with ";")',
+    'Fixed cost associated with each pre-recruit capture gear (separate stanza-specific parameters with ";")',
+    'Fixed cost associated with each recruit capture gear (separate gear-specific parameters with ";")',
+    'Effort-based cost associated with each pre-recruit capture gear (separate stanza-specific parameters with ";")',
+    'Effort-based cost associated with each recruit capture gear (separate gear-specific parameters with ";")',
+    'Discount rate (optional)',
+    'Generation time (optional)',
+    #'Proportional to ascending slope of dome-shaped selectivity curve',
+    #'Proportional to length at maximum selectivity',
+    #'Rate of decline of dome-shaped selectivity (bounded between 0-1)',
+    'Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)',
+    'Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
+    'Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)',
+    'Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
+    'Initial age structure in the population (default is NA; separate age-specific population sizes with ";")'
+  )
+
+  file_out <- data.frame(
+    Parameters = param_names,
+    values = "",
+    Description = notes
+  )
+kable(file_out, align='l')
 ```

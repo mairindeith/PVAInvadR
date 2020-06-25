@@ -8,21 +8,25 @@ decision(
   input,
   decision_csv = NULL,
   decision_list = NULL,
-  sens.pcent = NULL,
+  custom_inits = NULL,
+  sens_percent = NULL,
   direction = NULL,
-  sens.params = NULL,
-  run_parallel = F
+  sens_params = NULL,
+  parallel = F,
+  pretty = F,
+  quiet = F
 )
 }
 \arguments{
-\item{sens.pcent}{(Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})}
+\item{custom_inits}{(Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.}
+
+\item{sens_percent}{(Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})}
 
 \item{direction}{(Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?}
 
-\item{custom.inits}{(Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.}
-}
-\value{
+\item{parallel}{(Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")}
 
+\item{pretty}{(Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.}
 }
 \description{
 Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.

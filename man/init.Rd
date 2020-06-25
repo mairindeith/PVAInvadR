@@ -2,10 +2,12 @@
 % Please edit documentation in R/init.R
 \name{init}
 \alias{init}
-\title{Initialize parameters for use in a \code{pva()} simulated run; called by the \code{pva()} function.}
+\title{Initialize parameters from input parameters. This converts parameters into a form to be used by PVA.
+   Does not need to be called by the user, instead is called by several user-facing functions in the PVAInvadR suite}
 \usage{
-init(input, input.params = NULL, p.cent.trans = NULL)
+init(input, input_params = NULL, pcent_trans = NULL, quiet = F)
 }
 \description{
-Initialize parameters for use in a \code{pva()} simulated run; called by the \code{pva()} function.
+Initialize parameters from input parameters. This converts parameters into a form to be used by PVA.
+   Does not need to be called by the user, instead is called by several user-facing functions in the PVAInvadR suite
 }
