@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Installing the Package
+## Step 0: Installing the Package
 
 `PVAInvadR` is available from a public GitHub repository.
 To install it, you need to install and use the `devtools` package.
@@ -25,31 +25,39 @@ If not yet installed, first install the `devtools` package.
 install.packages("devtools")
 ```
 
-Once installed, load the library so you can access its functions.
+Once installed, load the library so you can access its functions, then install and load the `PVAInvadR` package from GitHub.
 
 ```{r lib_devtools}
 library(devtools)
-```
-
-Then, download and load `PVAInvadR`.
-
-```{r install_pva}
 devtools::install_github("mairindeith/PVAInvadR")
 library(PVAInvadR)
 ```
 
-## Input PVA parameters
+## Step 1: Define PVA parameters
 
 **P**opulation **V**iability **A**nalysis (PVA) requires two types of parameters.
 
 1. **Biological parameters** that describe the species impacted by controls, and
 2. **Control parameters** that describe the controls (e.g. fishing gear types) and their impact on the target species.
 
-Save a fillable template .csv using the `pva_template()` function.
+The first step is to define the biological and control parameters to be used in PVA simulations.
+The easiest way to do this is to download and fill in the template .csv, using the `pva_template` function.
+This function downloads a blank parameter template - fill this in with the biological and control parameters.
+
+Replace `PATH/TO/TEMPLATE` with the full file path and file name where you would like to save the template.
 
 ```{r pva_template}
-pva_template("path_to_template.csv")
+pva_template("PATH/TO/TEMPLATE.csv")
 ```
+
+Now you can use any .csv editing software to define your PVA parameters.
+
+Note: for any parameters that differ between species stanzas or control gear types, you must define all parameters for all stanzas or gears.
+Separate multiple values with a semi-colon, `;`, in the .csv file.
+
+For example,
+For any multiple-value parameters, values should be provided in order from smallest  (for example, biological parameters which take on different values depending on cohort, or control parameters which differ based on different gear types applied).
+
 The template includes names of parameters needed by `PVAInvadR`, a blank column to be filled with parameter values, and a brief description of the parameter's meaning.
 For multi-value parameters (e.g. parameters specific to different stanzas or control gears), these values should be separated by a `;`.
 
@@ -146,8 +154,52 @@ param_names <- c(
 
   file_out <- data.frame(
     Parameters = param_names,
-    values = "",
+    # values = "",
     Description = notes
   )
-kable(file_out, align='l')
+kable(head(file_out), align='l')
+```
+
+After filling in the csv, load it in to the R session using `load_pva_parameters`.
+
+```{r loadparams}
+inputs <- load_pva_parameters("path_to_filled_parameter_file.csv")
+```
+
+## Running a PVA
+
+For the rest of the quick start guide, we're going to use `PVAInvadR`'s built-in dataset.
+
+```{r dataload}
+data("fusee")
+inputs <- fusee
+```
+Using these input parameters, let's run a PVA
+
+```{r loadparams}
+pva_results <- PVA(inputs)
+```
+
+
+
+
+
+
+
+`PVA` returns a number of objects in the form of a named list,
+including input parameters, parameters calculated from these inputs, and the results of the PVA.
+These include estimates of cost, population size,
+
+
+
+
+
+
+
+
+
+
+
+```{r pvaplot, echo = F}
+names(pva_results)
 ```
