@@ -21,13 +21,13 @@ To install it, you need to install and use the `devtools` package.
 
 If not yet installed, first install the `devtools` package.
 
-```{r install_devtools, eval = F}
+```{r install_devtools, eval = FALSE}
 install.packages("devtools")
 ```
 
 Once installed, load the library so you can access its functions, then install and load the `PVAInvadR` package from GitHub.
 
-```{r lib_devtools}
+```{r lib_devtools, eval = FALSE}
 library(devtools)
 devtools::install_github("mairindeith/PVAInvadR")
 library(PVAInvadR)
@@ -46,7 +46,7 @@ This function downloads a blank parameter template - fill this in with the biolo
 
 Replace `PATH/TO/TEMPLATE` with the full file path and file name where you would like to save the template.
 
-```{r pva_template}
+```{r pva_template, eval = F}
 pva_template("PATH/TO/TEMPLATE.csv")
 ```
 
@@ -162,7 +162,7 @@ Any parameters that expect `;`-separated parameter values will indicate this in 
 
 After filling in the csv, load it in to the R session using `load_pva_parameters`. Replace `PATH/TO/FILLED_TEMPLATE.csv` with the path to your now filled-in .csv template.
 
-```{r loadparams}
+```{r loadparams, eval = F}
 inputs <- load_pva_parameters("PATH/TO/FILLED_TEMPLATE.csv")
 ```
 
@@ -222,7 +222,7 @@ _ScenarioB_ will also increase the effort as above, and will also sample gear 1 
 
 Run `decision_setup`, select the parameters `E_A_1` and `t_start_A_1` to create a template .csv saved at `PATH/TO/DECISION_TEMPLATE.csv`.
 
-```{r decsetup_csv}
+```{r decsetup_csv, eval = F}
 decision_setup(inputs, scen_names = scenarios, csv = TRUE, csv_path = "PATH/TO/DECISION_TEMPLATE.csv")
 ```
 
@@ -233,13 +233,9 @@ Select the modified parameters in the pop-up window.
 Now, modify the .csv with each scenario's modified set of control parameters.
 The .csv created by `decision_setup` pre-sets each parameter to its current value in the original input dataset, so any value you do not have to modify can be left with its default value.
 
-Initial values:
+![Values from the original input data (automatically created with `decision_setup`)](img/dec_setup_pre.png)
 
-![presetup](img/dec_setup_pre.png)
-
-Modified values:
-
-![presetup](img/dec_setup_post.png)
+![Modified values for each `decision` scenario](img/dec_setup_post.png)
 
 The `decision` function will now simulate the defined scenarios and output a decision-support table with summary comparisons of scenarios.
 
@@ -247,9 +243,16 @@ Now, all you need to do is run the `decision` function and .
 `decision` requires the original parameter inputs, `inputs`, and the path to the scenario csv you just filled in (`decision_csv`, replace `PATH/TO/DECISION_TEMPLATE.csv` below to the file with your scenario-specific control parameters).
 
 
-```{r decision}
+```{r decision, eval = F}
 decision(inputs,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
+  parallel = TRUE,
+  pretty = TRUE) # Turn off for a manipulatable data frame format
+```
+
+```{r decision_real, echo = F}
+decision(inputs,
+  decision_csv = "dec_template.csv",
   parallel = TRUE,
   pretty = TRUE) # Turn off for a manipulatable data frame format
 ```
