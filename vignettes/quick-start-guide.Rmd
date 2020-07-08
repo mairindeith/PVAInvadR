@@ -180,7 +180,7 @@ inputs <- fusee
 Using these input parameters, let's run a PVA and save the results to `pva_results`.
 Let's also include a plot of simulated abundance over time by setting `create_plot = TRUE`.
 
-```{r loadparams}
+```{r firstpva}
 pva_results <- PVA(inputs, create_plot = TRUE)
 ```
 
