@@ -78,15 +78,8 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
       return(NULL)
     }
   }
-  if(list==T){
-    scen_list = vector("list", length(scen_names)) # Outermost list, named after scenario names
-    names(scen_list) = scen_names
-    for(n in scen_names){
-      scen_list[[n]] = all_param_vals[names(all_param_vals) %in% selected_params]# Pre-populate with original values
-    }
-    return(scen_list)
-  }
   if(csv==T){
+    list = F
     if(is.null(csv_path)){
       stop("No csv save path provided, decision_setup() failed.")
       return(NULL)
@@ -97,5 +90,13 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     scen_df = data.frame(cbind(scen_names, t(scen_df)))
     colnames(scen_df) = c("scenario", selected_params)
     readr::write_csv(scen_df, csv_path)
+  }
+  if(list==T){
+    scen_list = vector("list", length(scen_names)) # Outermost list, named after scenario names
+    names(scen_list) = scen_names
+    for(n in scen_names){
+      scen_list[[n]] = all_param_vals[names(all_param_vals) %in% selected_params]# Pre-populate with original values
+    }
+    return(scen_list)
   }
 }

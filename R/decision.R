@@ -60,7 +60,7 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
           message("...param: ", param_shortname, "[", param_num,"] = ", decision_setup[sn_idx,col_idx])
         }
       }
-      pva <- PVAInvasR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
+      pva <- PVAInvadR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
         cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)

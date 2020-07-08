@@ -9,7 +9,7 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
   if(!quiet){
     message("Running base decision scenario (biological parameters at original values)")
   }
-  base_decision <- PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, parallel = parallel, pretty = F, quiet = quiet)
+  base_decision <- PVAInvadR::decision(input, decision_csv = decision_csv, decision_list = decision_list, parallel = parallel, pretty = F, quiet = quiet)
   scenNames <- base_decision$scenario_name
   upper_var <- 1+percent
   lower_var <- 1-percent
@@ -57,8 +57,8 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
       }
       ind <- which(var_par == p)
       # Apply upper transformation +X%
-      tmp_inits_upper <- PVAInvasR::init(input, input_params = p, pcent_trans = upper_var, quiet = quiet)
-      tmp_decision_upper <- PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_upper, direction = "upper", sens_percent = upper_var, sens_params = p, parallel = parallel, quiet = quiet)
+      tmp_inits_upper <- PVAInvadR::init(input, input_params = p, pcent_trans = upper_var, quiet = quiet)
+      tmp_decision_upper <- PVAInvadR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_upper, direction = "upper", sens_percent = upper_var, sens_params = p, parallel = parallel, quiet = quiet)
 
       cost_T_u[,ind+1] <- tmp_decision_upper$annual_cost
       p_extirp_u[,ind+1] <- tmp_decision_upper$p_eradication
@@ -73,8 +73,8 @@ rank_uncertainty <- function(input, percent=0.15, decision_csv = NULL, decision_
       rm(tmp_decision_upper)
       gc()
       # Apply lower transformation -X%
-      tmp_inits_lower <- PVAInvasR::init(input, input_params = p, pcent_trans = lower_var, quiet = quiet)
-      tmp_decision_lower <- PVAInvasR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_lower, direction = "lower", sens_percent = lower_var, sens_params = p, parallel = parallel, quiet = quiet)
+      tmp_inits_lower <- PVAInvadR::init(input, input_params = p, pcent_trans = lower_var, quiet = quiet)
+      tmp_decision_lower <- PVAInvadR::decision(input, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_lower, direction = "lower", sens_percent = lower_var, sens_params = p, parallel = parallel, quiet = quiet)
       cost_T_l[,ind+1] <- tmp_decision_lower$annual_cost
       p_extirp_l[,ind+1] <- tmp_decision_lower$p_eradication
       Nt_med_l[,ind+1] <- tmp_decision_lower$median_abundance

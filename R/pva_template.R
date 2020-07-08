@@ -1,7 +1,7 @@
 #' Save a .csv template of parameters. Once filled in, the csv template can be loaded using load_pva_parameters().
 #'
 #' @param filepath File path where the parameter template should be saved.
-#' @return Nothing - a parameter template will be saved at the `file` location provided.
+#' @return Nothing - a parameter template will be saved at the file location provided.
 #' @examples
 #' # Save the default template
 #' pva_template('~/Documents/PVA_Examples/parameter_template.csv')
@@ -32,8 +32,8 @@ pva_template <- function(file){
       'bet',
       'cann_a',
       'sd_S',
-      'UR', #
-      'UA', #
+      'U_R', #
+      'U_A', #
       'samp_A',
       'E_R', #
       'E_A', #
@@ -58,30 +58,30 @@ pva_template <- function(file){
       'Time-step length as a proportion of one year (<1 means more than 1 time step per year)',
       'Number of simulations',
       'Number of gears applied to recruited animals',
-      'Time-step when removal starts for each pre-recruit stanza (separate stanza-specific parameters with ";")',
-      'Time-step when removal starts for each gear used on recruited animals (separate gear-specific parameters with ";")',
-      'Range of unfished recruited abundance (separate lower and upper range with ";")',
+      'Time-step when removal starts for each pre-recruit stanza (separate stanza-specific parameters using ;)',
+      'Time-step when removal starts for each gear used on recruited animals (separate gear-specific parameters using ;)',
+      'Range of unfished recruited abundance (separate lower and upper range using ;)',
       'Recruitment compensation ratio (difference in juvenile survival between unfished and near-zero density)',
       'Proportion of mortality at equilibrium that is due to cannibalism',
       'von Bertalanffy growth parameter',
       'Fecundity multiplier on weight',
       'Minimum weight at maturity (as a proportion of maximum weight)',
       'Time-steps of the year when spawning occurs (inclusive of the upper time step; i.e. a range of 1-2 indicates that spawning occurs in the first and second time steps)',
-      'Maximum survival by stanza (separate stanza-specific parameters with ";")',
-      'Stanza-specific maximum available habitat (separate stanza-specific parameters with ";")',
+      'Maximum survival by stanza (separate stanza-specific parameters using ;)',
+      'Stanza-specific maximum available habitat (separate stanza-specific parameters using ;)',
       'Initial number of vulnerable fish in the population',
       'Hyperstability parameter',
       'Age at which cannibalism begins',
       'Standard deviation in recruitment across years',
-      'Proportion of pre-recruit animals removed by gear (proportion caught per unit effort; separate stanza-specific parameters with ";")',
-      'Proportion of recruited animals removed by gear (proportion caught per unit effort; separate gear-specific parameters with ";")',
-      'Time step(s) in the year that each gear is fished (enter "1" if there is only 1 time step per year; separate gear-specific parameters with ";")',
-      'Effort expended by each pre-recruit capture gear (separate gear-specific parameters with ";")',
-      'Effort expended by each recruit capture gear (separate gear-specific parameters with ";")',
-      'Fixed cost associated with each pre-recruit capture gear (separate stanza-specific parameters with ";")',
-      'Fixed cost associated with each recruit capture gear (separate gear-specific parameters with ";")',
-      'Effort-based cost associated with each pre-recruit capture gear (separate stanza-specific parameters with ";")',
-      'Effort-based cost associated with each recruit capture gear (separate gear-specific parameters with ";")',
+      'Proportion of pre-recruit animals removed by gear (proportion caught per unit effort; separate stanza-specific parameters using ;)',
+      'Proportion of recruited animals removed by gear (proportion caught per unit effort; separate gear-specific parameters using ;)',
+      'Time step(s) in the year that each gear is fished (enter "1" if there is only 1 time step per year; separate gear-specific parameters using ;)',
+      'Effort expended by each pre-recruit capture gear (separate gear-specific parameters using ;)',
+      'Effort expended by each recruit capture gear (separate gear-specific parameters using ;)',
+      'Fixed cost associated with each pre-recruit capture gear (separate stanza-specific parameters using ;)',
+      'Fixed cost associated with each recruit capture gear (separate gear-specific parameters using ;)',
+      'Effort-based cost associated with each pre-recruit capture gear (separate stanza-specific parameters using ;)',
+      'Effort-based cost associated with each recruit capture gear (separate gear-specific parameters using ;)',
       'Discount rate (optional)',
       'Generation time (optional)',
       #'Proportional to ascending slope of dome-shaped selectivity curve',
@@ -91,12 +91,12 @@ pva_template <- function(file){
       'Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
       'Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)',
       'Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
-      'Initial age structure in the population (default is NA; separate age-specific population sizes with ";")'
+      'Initial age structure in the population (default is NA; separate age-specific population sizes using ;)'
     )
 
     file_out <- data.frame(
       Parameters = param_names,
-      values = "",
+      Values = '',
       Description = notes
     )
     readr::write_csv(file_out, file)

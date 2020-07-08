@@ -97,8 +97,11 @@ load_pva_parameters <- function(filepath) {
       'init_NA'
     )
   param_list <- list()
-  read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE)
-  params <- read_dat$Parameter
+  read_dat <- read.csv(filepath, sep=',', stringsAsFactors=FALSE, check.names = F)
+  # Replace "'"
+  read_dat[] <- lapply(read_dat, function(x) gsub("'", "", x))
+  colnames(read_dat) <- gsub("'", "", colnames(read_dat))
+  params <- read_dat$Parameters
   for(p in 1:length(params)){
     param_name <- params[p]
     if(param_name %in% dot_params){
