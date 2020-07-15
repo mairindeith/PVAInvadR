@@ -37,6 +37,7 @@
 #' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' pva(pva_params = inputParameterList)
+#' @export
 
 PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, quiet = FALSE){

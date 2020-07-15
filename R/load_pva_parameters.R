@@ -4,6 +4,7 @@
 #' @return pva_parameters A list of population and control parameters for use in other `PVAInvasR` functions.
 #' @examples
 #' load_pva_parameters('~/Documents/PVA_Examples/filledin_parameter_template.csv')
+#' @export
 
 load_pva_parameters <- function(filepath) {
   if (is.null(filepath)){

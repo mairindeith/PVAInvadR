@@ -5,6 +5,7 @@
 #' @param decision The output from a decision() function call. Provides the basis for comparing rankings of control scenarios.
 #' @param percent The percentage by which biological parameters should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.
 #' @param parallel (Optional) Set parallel = TRUE to run analyses using multiple cores.
+#' @export
 
 rank_uncertainty <- function(params, percent=0.15, decision_csv = NULL, decision_list = NULL, parallel = FALSE, quiet = FALSE){
   if(!quiet){

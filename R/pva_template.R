@@ -1,5 +1,6 @@
 #' Save a .csv template of parameters. Once filled in, the csv template can be loaded using load_pva_parameters().
 #'
+#' @export
 #' @param filepath File path where the parameter template should be saved.
 #' @return Nothing - a parameter template will be saved at the file location provided.
 
@@ -90,7 +91,6 @@ pva_template <- function(file){
       'Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
       'Initial age structure in the population (default is NA; separate age-specific population sizes using ;)'
     )
-
     file_out <- data.frame(
       Parameters = param_names,
       Values = '',

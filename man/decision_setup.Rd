@@ -5,7 +5,7 @@
 \title{Using imported population and control parameters, run a population viability analysis (PVA) on the target species.}
 \usage{
 decision_setup(
-  input,
+  params,
   scen_names,
   list = T,
   csv = F,
@@ -15,7 +15,7 @@ decision_setup(
 )
 }
 \arguments{
-\item{input}{List of input parameters, usually created with the load_pva_parameters() function.}
+\item{params}{List of params parameters, usually created with the load_pva_parameters() function.}
 
 \item{scen_names}{Character vector of scenario names.}
 
@@ -32,7 +32,7 @@ decision_setup(
 Outputs either a nested named list (if list = TRUE) or a csv (if csv = TRUE and csv_path provided).
  -  List output: a nested named list where the outermost list contains names of scenarios, and within each scenario is a named list of parameters to modify for decision-making.
  -  CSV output: a CSV file where the first column indicates scenario names, and subsequent columns indicate control parameters to be varied between scenarios.
-When setting up input files for the decision, users should leave blank spaces where the parameters should be the same as the input parameters. Only those values that are filled in will be modified and compared with decision().}
+When setting up params files for the decision, users should leave blank spaces where the parameters should be the same as the params parameters. Only those values that are filled in will be modified and compared with decision().}
 }
 \description{
 Using imported population and control parameters, run a population viability analysis (PVA) on the target species.

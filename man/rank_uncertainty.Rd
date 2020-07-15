@@ -5,7 +5,7 @@
 \title{Rank proposed PVA decision scenarios when biological parameters are increased or decreased by some percentage.}
 \usage{
 rank_uncertainty(
-  input,
+  params,
   percent = 0.15,
   decision_csv = NULL,
   decision_list = NULL,
@@ -14,7 +14,9 @@ rank_uncertainty(
 )
 }
 \arguments{
-\item{percent}{The percentage by which biological parameters ( ) should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.}
+\item{params}{The output from a decision() function call. Provides the basis for comparing rankings of control scenarios.}
+
+\item{percent}{The percentage by which biological parameters should be modified. Defaults to 15%, such that biological parameters are multiplied by 115% and 85% for upper and lower estimates, respectively.}
 
 \item{parallel}{(Optional) Set parallel = TRUE to run analyses using multiple cores.}
 

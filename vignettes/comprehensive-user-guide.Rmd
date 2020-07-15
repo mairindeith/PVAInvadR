@@ -1,0 +1,255 @@
+---
+title: "PVAInvasR Comprehensive User Guide"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{under-the-hood-calculations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, echo = F}
+library(PVAInvasR)
+```
+
+For a simpler introduction to `PVAInvadR`, check out the (quick start guide vignette)[quick-start-guide.html].
+
+#Introduction
+
+`PVAInvadR` is a population viability analysis (PVA) simulator designed to quickly and accurately reflect uncertainty in the fate of invasive populations.
+The software evaluates how candidate removal strategies that target different life stages can influence population persistence.
+
+Moreover, given a suite of alternative removal strategies--differing by the types of gears (or combinations of gears) and effort regimes--`PVAInvadR` can run a PVA with each removal strategy and compare their efficacy with a multi-criteria decision table.
+The removal stragies can be compared according to the probability of eradicating the targetted species, the annual and cumulative cost of implementing the gears, and the probable range of target species abundance after the full simulation period.
+
+The goal of the software is to provide rapid assessment of different strategies to assist workshop-type discussions of invasive species removal, thereby encouraging discussion among stakeholders involved in invasive species removal.
+
+This user guide begins by describing the model's internal functions in [Model description](#modeldesc) (including the [parameters needed to run the model](#params)) and closes with [how to run PVAInvasR functions](#modelrun)
+
+#Model description {#modeldesc}
+
+The PVA model can be used on any species with indeterminate growth (for example, most fish, reptiles, amphibians, and invertebrates).
+Populations are split into two life stages: pre-recruits and recruited juveniles/adults.
+Pre-recruits can be further split into stanzas or cohorts -- fish in each stanza are subject to density-dependent mortality.
+Users can define the strength of this dependence for each stanza.
+Recruited animals, on the other hand, are age structured and subjected to length-dependent mortality.
+
+However, this approach can also be catered somewhat to specific case studies.
+For example, if density-dependence persists after recruitment, age at recruitment can be adjusted and the number of stanzas increased to overlap with juvenile life stages.
+
+##Biological and control parameters {#params}
+
+The PVA model (called by the `PVA()` function) simulates population trajectories given a set of input biological and control parameters.
+It also depends on parameters that define the behaviour of the PVA simulation; for example, for how many iterations and over what period of time should the model be run?
+
+Below are tables of the biological, control, and PVA parameters necessary to run a PVA simulation.
+
+```{r bioParamTable, echo = F}
+library(knitr)
+param_names <- c(
+  'species',
+  'A',
+  'AR',
+  'nS',
+  'nT',
+  'dt',
+  'n_sim',
+  'n_gear',
+  't_start_R', #
+  't_start_A', #
+  # Population parameters
+  'V0',
+  'reck',
+  'p_can',
+  'K',
+  'afec',
+  'Wmat',
+  't_spn',
+  'Ms',
+  'Bs',
+  'V1',
+  'bet',
+  'cann_a',
+  'sd_S',
+  'UR', #
+  'UA', #
+  'samp_A',
+  'E_R', #
+  'E_A', #
+  'C_f_R', #
+  'C_f_A', #
+  'C_E_R', #
+  'C_E_A', #
+  'r',
+  'G',
+  'v_a', #
+  'v_b', #
+  'v_c', #
+  'v_d', #
+  'init_NA'
+)
+notes <<- c(
+  'Species abbreviation',
+  'Maximum age (the age where only 1% of fish survive when unfished)',
+  'Age at recruitment (years)',
+  'Number of pre-recruit stanzas',
+  'Length of simulation (number of years)',
+  'Time-step length as a proportion of one year (<1 means more than 1 time step per year)',
+  'Number of simulations',
+  'Number of gears applied to recruited animals',
+  'Time-step when removal starts for each pre-recruit stanza',
+  'Time-step when removal starts for each gear used on recruited animals',
+  'Range of unfished recruited abundance',
+  'Recruitment compensation ratio (difference in juvenile survival between unfished and near-zero density)',
+  'Proportion of mortality at equilibrium that is due to cannibalism',
+  'von Bertalanffy growth parameter',
+  'Fecundity multiplier on weight',
+  'Minimum weight at maturity (as a proportion of maximum weight)',
+  'Time-steps of the year when spawning occurs (indicated as a 0/1 switch)',
+  'Stanza-specific maximum survival',
+  'Stanza-specific maximum available habitat',
+  'Initial number of vulnerable fish in the population',
+  'Hyperstability parameter',
+  'Age at which cannibalism begins',
+  'Standard deviation in recruitment across years',
+  'Proportion of pre-recruit animals removed by gear per unit effort',
+  'Proportion of recruited animals removed by gear per unit effort',
+  'Time step(s) in the year that each gear is fished',
+  'Effort expended by each pre-recruit capture gear',
+  'Effort expended by each recruit capture gear',
+  'Fixed cost associated with each pre-recruit capture gear',
+  'Fixed cost associated with each recruit capture gear',
+  'Effort-based cost associated with each pre-recruit capture gear',
+  'Effort-based cost associated with each recruit capture gear',
+  'Discount rate (optional)',
+  'Generation time (optional)',
+  'Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)',
+  'Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
+  'Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)',
+  'Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
+  '(Optional) Initial age structure in the population'
+)
+file_out <- data.frame(
+  Parameters = param_names,
+  # values = "",
+  Description = notes
+)
+# Rows for biological params
+biol_rows <- c(1:4, 11:23, 39)
+# Rows for control params
+control_rows <- c(8:10, 24:38)
+# Rows for PVA params
+pva_rows <- c(5:7)
+kable(file_out[biol_rows,], align='l', row.names = NA, caption = "Biological parameters")
+kable(file_out[control_rows,], align='l', row.names = NA, caption = "Control parameters")
+kable(file_out[pva_rows,], align='l', row.names = NA, caption = "PVA parmaters")
+```
+
+_When these user-input parameters are used to derive other parameters below, user-defined parameters are marked with an asterisk ($*$). For example, calculations that use maximum age, A, is indicated with $A^{*}$_.
+
+## Derived parameters and calculations
+
+From the biological parameters above, `PVAInvadR` derives stock-recruit parameters from calculations of equilibrium population structure when the population is unexploited.
+Length, weight, and fecundity at age $a$ ($l_a$, $w_a$, and $f_a$, equations 1-3) are calculated first, then instantaneous length-based mortality based on the Lorenzen model (such that mortality is inversely related to length; equation 4, [Lorenzen 2000](#refs)).
+
+\begin{equation}
+  \label{eq:1}
+  l_a = 1 - e^{-K^{*} a}
+\end{equation}
+
+\begin{equation}
+  \label{eq:2}
+  w_a = l_a^3
+\end{equation}
+
+\begin{equation}
+  \label{eq:3}
+  f_a = afec^{*} (w_a - Wmat^{*})
+\end{equation}
+
+Asymptotic mortality rate is calculated from $A^{*}$, the maximum age observed in the population, which is assumed to have a lifetime survivorship of 1% (i.e. 1% of recruited animals live to age = $A^{*}$).
+$M_{\infty}$, minimum instantaenous mortality, is back-calculated similar to the method of [Hoenig (1983)](#refs).
+
+\begin{equation}
+  \label{eq:4}
+  M_{\infty} = \frac{ln(0.01)K^{*}}{ln(l_{a=AR^{*}}) - ln \left [ l_{a=AR^{*}} + e^{\frac{K^{*}(A^{*} - AR^{*})}{dt^{*}}}-1 \right ]}
+\end{equation}
+
+Survival of each age group follows [Lorenzen 2000](#refs), which can then be used to calcualte survivorship to each age ($lx_a$):
+
+\begin{equation}
+  \label{eq:5}
+  S_a = \left (
+    \frac{l_a}{l_a + e^{K^{*}*dt^{*}}-1}\right )^\frac{M_{\infty}}{K^{*}}
+\end{equation}
+
+\begin{equation}
+  \label{eq:6}
+  lx_a = \begin{cases}
+  1 & \text{ if } a = AR^{*}\\
+  \prod^{a-1}_{a=AR^{*}} S_a & \text{ if } a > AR^{*}
+  \end{cases}
+\end{equation}
+
+The product of survivorship and fecundity-at-age for females then provides equilibrium spawners per recruit based on the ages when spawning occurs (i.e. where $spn_a = 1$; non-spawning ages are indicated with $spn_a = 0$), which is used to calculate Beverton-Holt recruitment parameters ([Walters and Martell, 2004](#refs)).
+
+\begin{equation}
+  \label{eq:7}
+  \phi_0 = \Sigma^{A^{*}}_{a=1} \frac{lx_a f_a spn_a}{2}
+\end{equation}
+
+Beverton-Holt parameters for each stanza, $s$, are influenced by stanza-specific relative mortality and habitat capacity (which scale mortality by density of competitors within a cohort; ([Walters and Korman, 1999](#refs); [Pine et al., 2013](#refs))). Below,
+
+\begin{equation}
+  \label{eq:8}
+  \alpha_s = \frac{K}{\phi_0} e^ {\left ( \frac{M_s^{*}}{\Sigma M_s^{*}} \right )}
+\end{equation}
+
+\begin{equation}
+  \label{eq:9}
+  \beta_s = Bs^{*} \frac{K^{*}-1}{R0^{*}\phi_0 \Sigma_{s'} \left ( \beta_{s'} \prod_{s''=0}^{s''=s'-1} \alpha_{s''}\right )}
+\end{equation}
+
+In cases where cannibalism occurs in pre-recruit stanzas (i.e. $p_cann^{*} > 0$), maximum survival for each stanza is then also modified as a log-linear function of cannibal abundance (based on the reformulation of the Beverton-Holt model, see: [Walters and Korman, 1999](#refs).
+
+**HERE IS WHERE I AM CONFUSED**
+
+# Running the model and use for decision support {#modelrun}
+
+## Evaluating a single removal strategy with `PVA`
+
+## Evaluating multiple removal stratgies with `decision`
+
+## Evaluating multiple removal strategies under biological uncertainty with `rank_uncertainty
+
+# References {#refs}
+
+- Arreguin-Sanchez, F., 1996. Catchability: assessment a key parameter
+for fish stock. Rev. Fish Biol. Fish. 6, 221–242.
+- Hoenig, J.M., 1983. Empirical use of longevity data to estimate
+mortality rates. Fish. Bull. 82, 898–903. doi:10.2307/1940001
+- Lorenzen, K., 2000. Allometry of natural mortality as a basis for
+assessing optimal release size in fish-stocking programmes. Can.
+J. Fish. Aquat. Sci. 57, 2374–2381.
+- Pine, W.E.I., Healy, B., Smith, E.O., Trammell, M., Speas, D., Valdez,
+R., Yard, M., Walters, C., Ahrens, R., Vanhaverbeke, R., Stone, D.,
+Wilson, W., 2013. An individual-based model for population
+viability analysis of humpback chub in Grand Canyon. North Am.
+J. Fish. Manag. 33, 626–641.
+- Ricker, W.E., 1975. Computation and interpretation of biological
+statistics of fish populations. Bull. Fish. Res. Board Canada
+1913890, 382pp.
+- Walters, C., Korman, J., 1999. Linking recruitment to trophic factors:
+revisiting the Beverton-Holt recruitment model from a life history
+and multispecies perspective. Rev. Fish Biol. Fish. 9, 187–202.
+- Walters, C., Martell, S., 2004. Fisheries ecology and management.
+Princeton University Press, Princeton.

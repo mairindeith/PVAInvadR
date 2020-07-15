@@ -5,7 +5,7 @@
 \title{Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.}
 \usage{
 decision(
-  input,
+  params,
   decision_csv = NULL,
   decision_list = NULL,
   custom_inits = NULL,
@@ -18,7 +18,7 @@ decision(
 )
 }
 \arguments{
-\item{input}{Original population and control parameters for the target species and control gear. See `load_pva_parameters`.}
+\item{params}{Original population and control parameters for the target species and control gear. See `load_pva_parameters`.}
 
 \item{decision_csv}{(One of decision_csv or decision_list must be provided) Path to a csv file containing scenario-specific control parameters to be used in decision making. May be created with `decision_setup`.}
 

@@ -1,5 +1,5 @@
 ---
-title: "quick-start-guide"
+title: "PVAInvadR Quick Start Guide"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{quick-start-guide}

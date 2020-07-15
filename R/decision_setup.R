@@ -12,6 +12,7 @@
 #'  -  List output: a nested named list where the outermost list contains names of scenarios, and within each scenario is a named list of parameters to modify for decision-making.
 #'  -  CSV output: a CSV file where the first column indicates scenario names, and subsequent columns indicate control parameters to be varied between scenarios.
 #' When setting up params files for the decision, users should leave blank spaces where the parameters should be the same as the params parameters. Only those values that are filled in will be modified and compared with decision().
+#' @export
 
 decision_setup = function(params, scen_names, list = T, csv = F, csv_path = NULL,
   gui = T, selected_params = NULL){
