@@ -1,7 +1,7 @@
 #' Initialize parameters from input parameters. This converts parameters into a form to be used by PVA.
 #'    Does not need to be called by the user, instead is called by several user-facing functions in the PVAInvadR suite
-#' @export
 
+#' @export
 init <- function(input, input_params = NULL, pcent_trans = NULL, quiet = F){
     start <- Sys.time()
     if(quiet == F){
