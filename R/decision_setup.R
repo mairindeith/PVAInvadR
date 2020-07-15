@@ -1,6 +1,6 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
 #'
-#' @param input List of input parameters, usually created with the load_pva_parameters() function.
+#' @param params List of params parameters, usually created with the load_pva_parameters() function.
 #' @param scen_names Character vector of scenario names.
 #' @param list (Optional) Boolean; should the output be a named list? See below for list format. Either list or csv must be TRUE.
 #' @param csv (Optional) Boolean; should the output be a CSV to be re-loaded into the session? If csv=TRUE, csv_path must be provided.
@@ -11,18 +11,18 @@
 #' Outputs either a nested named list (if list = TRUE) or a csv (if csv = TRUE and csv_path provided).
 #'  -  List output: a nested named list where the outermost list contains names of scenarios, and within each scenario is a named list of parameters to modify for decision-making.
 #'  -  CSV output: a CSV file where the first column indicates scenario names, and subsequent columns indicate control parameters to be varied between scenarios.
-#' When setting up input files for the decision, users should leave blank spaces where the parameters should be the same as the input parameters. Only those values that are filled in will be modified and compared with decision().
+#' When setting up params files for the decision, users should leave blank spaces where the parameters should be the same as the params parameters. Only those values that are filled in will be modified and compared with decision().
 
-decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
+decision_setup = function(params, scen_names, list = T, csv = F, csv_path = NULL,
   gui = T, selected_params = NULL){
   # Identify all possible parameters that could be modified by scenarios
   all_params = c(
-    paste0("t_start_R_", 1:input$nS),
-    paste0("t_start_A_",1:input$n_gear),
-    paste0("samp_A_",1:input$n_gear),
-    paste0("E_R_",1:input$nS),
-    paste0("U_R_",1:input$nS),
-    paste0("E_A_",1:input$n_gear)
+    paste0("t_start_R_", 1:params$nS),
+    paste0("t_start_A_",1:params$n_gear),
+    paste0("samp_A_",1:params$n_gear),
+    paste0("E_R_",1:params$nS),
+    paste0("U_R_",1:params$nS),
+    paste0("E_A_",1:params$n_gear)
   )
   # Find original values for each parameter
   all_param_vals = vector(mode = "list", length = length(all_params))
@@ -31,7 +31,7 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
   for(p in names(all_param_vals)){
     param_shortname <- substr(p, start=1, stop=regexpr("\\_[0-9]", p, fixed=F)-1)
     param_num <- as.numeric(substr(p, start=regexpr("\\_[0-9]", p, fixed=F)+1, stop=nchar(p)))
-    all_param_vals[[p]] = input[[param_shortname]][param_num]
+    all_param_vals[[p]] = params[[param_shortname]][param_num]
   }
 
   if(gui == F){
@@ -53,18 +53,18 @@ decision_setup = function(input, scen_names, list = T, csv = F, csv_path = NULL,
     } # if()
   } else { # if(gui == T)
     param_desc=c(
-      paste0("Time-step to begin sampling pre-recruits, stanza ",1:input$nS,
-        " (t_start_R_",1:input$nS,")"),
-      paste0("Time-step to begin sampling adults, gear ",1:input$n_gear,
-        " (t_start_A_",1:input$n_gear,")"),
-      paste0("Time-step in the year that gear ",1:input$n_gear,
-        " is fished (samp_A_",1:input$n_gear,")"),
+      paste0("Time-step to begin sampling pre-recruits, stanza ",1:params$nS,
+        " (t_start_R_",1:params$nS,")"),
+      paste0("Time-step to begin sampling adults, gear ",1:params$n_gear,
+        " (t_start_A_",1:params$n_gear,")"),
+      paste0("Time-step in the year that gear ",1:params$n_gear,
+        " is fished (samp_A_",1:params$n_gear,")"),
       paste0("Effort expended by each pre-recruit sampling gear, stanza ",
-        1:input$nS," (E_R_",1:input$nS,")"),
+        1:params$nS," (E_R_",1:params$nS,")"),
       paste0("Proportion of pre-recruits removed with 1 unit of effort, stanza ",
-        1:input$nS," (U_R_",1:input$nS,")"),
+        1:params$nS," (U_R_",1:params$nS,")"),
       paste0("Effort expended by each adult sampling gear, gear ",
-        1:input$n_gear," (E_A_",1:input$n_gear,")")
+        1:params$n_gear," (E_A_",1:params$n_gear,")")
     )
     selected_params = select.list(all_params, multiple = T,
       title = "Select the parameters to vary between scenarios")

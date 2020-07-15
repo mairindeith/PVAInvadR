@@ -1,7 +1,7 @@
 #' Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.
 #' @import foreach
 #'
-#' @param input Original population and control parameters for the target species and control gear. See `load_pva_parameters`.
+#' @param params Original population and control parameters for the target species and control gear. See `load_pva_parameters`.
 #' @param decision_csv (One of decision_csv or decision_list must be provided) Path to a csv file containing scenario-specific control parameters to be used in decision making. May be created with `decision_setup`.
 #' @param decision_list (One of decision_csv or decision_list must be provided) An R list containing named parameters and associated values for each scenario. May be created with `decision_setup`.
 #' @param custom_inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.
@@ -11,7 +11,7 @@
 #' @param parallel (Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")
 #' @param pretty (Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.
 
-decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F, quiet = F){ #, save_pva = F){
+decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F, quiet = F){ #, save_pva = F){
   if(is.null(decision_csv) && is.null(decision_list)){
     stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
     return(NULL)
@@ -43,7 +43,7 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
     doParallel::registerDoParallel(n_cores)
     df <- foreach::foreach(sn = scenNames, .export = "decision_setup", .combine = "rbind") %dopar% {
       sn_idx <- which(scenNames == sn)
-      scenParams <- inputs # for each scenario, copy the existing inputs and modify as needed
+      scenParams <- paramss # for each scenario, copy the existing paramss and modify as needed
       if(quiet == F){
         message("Scenario ",sn_idx, ": ", sn)
       }
@@ -60,10 +60,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
         cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
-        p_extirp <- round(pva$p_extinct[input$nT],2)
+        p_extirp <- round(pva$p_extinct[params$nT],2)
         t_extirp <- round(mean(pva$yext_seq),0)
         t_extirp_l <- round(min(pva$yext_seq),0)
-        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+        ifelse(max(pva$yext_seq)==params$nT*params$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- round(pva$NT[1],1)
@@ -80,10 +80,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       } else {
         cost_1 <- pva$cost_1
         cost_T <- pva$cost_T
-        p_extirp <- pva$p_extinct[input$nT]
+        p_extirp <- pva$p_extinct[params$nT]
         t_extirp <- mean(pva$yext_seq)
         t_extirp_l <- min(pva$yext_seq)
-        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+        ifelse(max(pva$yext_seq)==params$nT*params$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- pva$NT[1]
@@ -107,7 +107,7 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
   } else {
     df <- foreach(sn = scenNames, .combine = "rbind") %do% {
       sn_idx <- which(scenNames == sn)
-      scenParams <- inputs
+      scenParams <- paramss
       if(quiet == F){
         message("Scenario: ",sn)
       }
@@ -120,10 +120,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
         cost_T <- format(pva$E_NPV, big.mark=",", trim=TRUE)
-        p_extirp <- round(pva$p_extinct[input$nT],2)
+        p_extirp <- round(pva$p_extinct[params$nT],2)
         t_extirp <- round(mean(pva$yext_seq),0)
         t_extirp_l <- round(min(pva$yext_seq),0)
-        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+        ifelse(max(pva$yext_seq)==params$nT*params$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- round(pva$NT[1],1)
@@ -140,10 +140,10 @@ decision <- function(input, decision_csv = NULL, decision_list = NULL, custom_in
       } else {
         cost_1 <- pva$cost_1
         cost_T <- pva$cost_T
-        p_extirp <- pva$p_extinct[input$nT]
+        p_extirp <- pva$p_extinct[params$nT]
         t_extirp <- mean(pva$yext_seq)
         t_extirp_l <- min(pva$yext_seq)
-        ifelse(max(pva$yext_seq)==input$nT*input$dt,
+        ifelse(max(pva$yext_seq)==params$nT*params$dt,
           t_extirp_u <- paste0(round(max(pva$yext_seq),0),"+"), # if
           t_extirp_u <- paste0(round(max(pva$yext_seq),0))) # else
         Nt_lcl <- pva$NT[1]

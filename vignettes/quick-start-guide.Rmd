@@ -163,25 +163,25 @@ Any parameters that expect `;`-separated parameter values will indicate this in 
 After filling in the csv, load it in to the R session using `load_pva_parameters`. Replace `PATH/TO/FILLED_TEMPLATE.csv` with the path to your now filled-in .csv template.
 
 ```{r loadparams, eval = F}
-inputs <- load_pva_parameters("PATH/TO/FILLED_TEMPLATE.csv")
+params <- load_pva_parameters("PATH/TO/FILLED_TEMPLATE.csv")
 ```
 
 ## Step 2: Running your first `PVA`
 
 For the rest of the quick start guide, we're going to use `PVAInvadR`'s built-in dataset as an example.
 
-Load the example dataset and save these parameters with the variable name `inputs`.
+Load the example dataset and save these parameters with the variable name `params`.
 
 ```{r dataload}
 data("fusee")
-inputs <- fusee
+params <- fusee
 ```
 
 Using these input parameters, let's run a PVA and save the results to `pva_results`.
 Let's also include a plot of simulated abundance over time by setting `create_plot = TRUE`.
 
 ```{r firstpva}
-pva_results <- PVA(inputs, create_plot = TRUE)
+pva_results <- PVA(params, create_plot = TRUE)
 ```
 
 `PVA` returns a number of objects in the form of a named list,
@@ -223,7 +223,7 @@ _ScenarioB_ will also increase the effort as above, and will also sample gear 1 
 Run `decision_setup`, select the parameters `E_A_1` and `t_start_A_1` to create a template .csv saved at `PATH/TO/DECISION_TEMPLATE.csv`.
 
 ```{r decsetup_csv, eval = F}
-decision_setup(inputs, scen_names = scenarios, csv = TRUE, csv_path = "PATH/TO/DECISION_TEMPLATE.csv")
+decision_setup(params, scen_names = scenarios, csv = TRUE, csv_path = "PATH/TO/DECISION_TEMPLATE.csv")
 ```
 
 Select the modified parameters in the pop-up window.
@@ -240,17 +240,17 @@ The .csv created by `decision_setup` pre-sets each parameter to its current valu
 The `decision` function will now simulate the defined scenarios and output a decision-support table with summary comparisons of scenarios.
 
 Now, all you need to do is run the `decision` function.
-`decision` requires the original parameter inputs, `inputs`, and the path to the scenario csv you just filled in (`decision_csv`, replace `PATH/TO/DECISION_TEMPLATE.csv` below to the file with your scenario-specific control parameters).
+`decision` requires the original parameter inputs, `params`, and the path to the scenario csv you just filled in (`decision_csv`, replace `PATH/TO/DECISION_TEMPLATE.csv` below to the file with your scenario-specific control parameters).
 
 ```{r decision, eval = F}
-decision(inputs,
+decision(params,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
   parallel = TRUE,
   pretty = TRUE) # Turn off for a manipulatable data frame format
 ```
 
 ```{r decision_real, echo = F}
-decision(inputs,
+decision(params,
   decision_csv = "dec_template.csv",
   parallel = TRUE,
   pretty = TRUE) # Turn off for a manipulatable data frame format
@@ -266,20 +266,20 @@ The final step in the PVA workflow is to identify how the ranking of scenarios d
 The `rank_uncertainty()` function repeats the PVA after increasing and decreasing each biological parameters by a set percentage.
 Each biological parameter is varied one at a time (so the combined outcomes of multiple parameter uncertainty is not explored here).
 
-`rank_uncertainty` requires only the base parameter inputs, `inputs`, the .csv of control parameters modified by scenario, and what percent the biological parameters should be varied (but the default value is 15%, resulting in 85% and 115% the original value being evaluated).
+`rank_uncertainty` requires only the base parameter inputs, `params`, the .csv of control parameters modified by scenario, and what percent the biological parameters should be varied (but the default value is 15%, resulting in 85% and 115% the original value being evaluated).
 
 Then, the function will output decision ranking criteria when each
 
 Like above, let's run `rank_uncertainty` in parallel, using the `DECISION_TEMPLATE.csv` created earlier.
 
 ```{r rankuncertainty_dummy, eval = F}
-rank_uncertainty(inputs,
+rank_uncertainty(params,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
   parallel = TRUE)
 ```
 
 ```{r rankuncertainty_real, echo = F}
-rank_uncertainty(inputs,
+rank_uncertainty(params,
   decision_csv = "dec_template.csv",
   parallel = TRUE) # Turn off for a manipulatable data frame format
 ```
