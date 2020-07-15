@@ -1,8 +1,8 @@
 #' Rank proposed PVA decision scenarios when biological parameters are increased or decreased by some percentage.
 #' @import ggplot2
 #'
-#' @param df
-#' @param ylimit
+#' @param df Data frame containing data for plotting.
+#' @param ylimit (Optional) The upper limit of the y-axis.
 
 ggplot_sensitivity <- function(df, ylimit = NaN){
   pars <- c(expression(kappa),

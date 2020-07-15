@@ -10,7 +10,10 @@ pva_template(file)
 \item{filepath}{File path where the parameter template should be saved.}
 }
 \value{
-Nothing - a parameter template will be saved at the `file` location provided.
+Nothing - a parameter template will be saved at the file location provided.
+Proportional to ascending slope of dome-shaped selectivity curve',
+Proportional to length at maximum selectivity',
+Rate of decline of dome-shaped selectivity (bounded between 0-1)',
 }
 \description{
 Save a .csv template of parameters. Once filled in, the csv template can be loaded using load_pva_parameters().

@@ -239,9 +239,8 @@ The .csv created by `decision_setup` pre-sets each parameter to its current valu
 
 The `decision` function will now simulate the defined scenarios and output a decision-support table with summary comparisons of scenarios.
 
-Now, all you need to do is run the `decision` function and .
+Now, all you need to do is run the `decision` function.
 `decision` requires the original parameter inputs, `inputs`, and the path to the scenario csv you just filled in (`decision_csv`, replace `PATH/TO/DECISION_TEMPLATE.csv` below to the file with your scenario-specific control parameters).
-
 
 ```{r decision, eval = F}
 decision(inputs,
@@ -268,3 +267,19 @@ The `rank_uncertainty()` function repeats the PVA after increasing and decreasin
 Each biological parameter is varied one at a time (so the combined outcomes of multiple parameter uncertainty is not explored here).
 
 `rank_uncertainty` requires only the base parameter inputs, `inputs`, the .csv of control parameters modified by scenario, and what percent the biological parameters should be varied (but the default value is 15%, resulting in 85% and 115% the original value being evaluated).
+
+Then, the function will output decision ranking criteria when each
+
+Like above, let's run `rank_uncertainty` in parallel, using the `DECISION_TEMPLATE.csv` created earlier.
+
+```{r rankuncertainty_dummy, eval = F}
+rank_uncertainty(inputs,
+  decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
+  parallel = TRUE)
+```
+
+```{r rankuncertainty_real, echo = F}
+rank_uncertainty(inputs,
+  decision_csv = "dec_template.csv",
+  parallel = TRUE) # Turn off for a manipulatable data frame format
+```

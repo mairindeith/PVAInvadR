@@ -1,17 +1,13 @@
 #' Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.
 #' @import foreach
 #'
-#' @param input
-#' @param decision_csv
-#' @param decision_list
-#
-#       !!!!!!!!
+#' @param input Original population and control parameters for the target species and control gear. See `load_pva_parameters`.
+#' @param decision_csv (One of decision_csv or decision_list must be provided) Path to a csv file containing scenario-specific control parameters to be used in decision making. May be created with `decision_setup`.
+#' @param decision_list (One of decision_csv or decision_list must be provided) An R list containing named parameters and associated values for each scenario. May be created with `decision_setup`.
 #' @param custom_inits (Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.
 #' @param sens_percent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters
 #' @param sens_percent (Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
 #' @param direction (Optional, invoked by the `rankUncertainty` function) Should biological parameters be increased or decreased by  `sens.percent`?
-#       !!!!!!!! (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
-#
 #' @param parallel (Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")
 #' @param pretty (Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.
 

@@ -2,9 +2,6 @@
 #'
 #' @param filepath File path where the parameter template should be saved.
 #' @return Nothing - a parameter template will be saved at the file location provided.
-#' @examples
-#' # Save the default template
-#' pva_template('~/Documents/PVA_Examples/parameter_template.csv')
 
 pva_template <- function(file){
   param_names <- c(

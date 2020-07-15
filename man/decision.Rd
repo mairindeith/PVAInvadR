@@ -18,6 +18,12 @@ decision(
 )
 }
 \arguments{
+\item{input}{Original population and control parameters for the target species and control gear. See `load_pva_parameters`.}
+
+\item{decision_csv}{(One of decision_csv or decision_list must be provided) Path to a csv file containing scenario-specific control parameters to be used in decision making. May be created with `decision_setup`.}
+
+\item{decision_list}{(One of decision_csv or decision_list must be provided) An R list containing named parameters and associated values for each scenario. May be created with `decision_setup`.}
+
 \item{custom_inits}{(Optional, invoked by the `rankUncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pva.params}.}
 
 \item{sens_percent}{(Optional, invoked by the `rankUncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})}

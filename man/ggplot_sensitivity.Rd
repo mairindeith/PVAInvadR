@@ -6,6 +6,11 @@
 \usage{
 ggplot_sensitivity(df, ylimit = NaN)
 }
+\arguments{
+\item{df}{Data frame containing data for plotting.}
+
+\item{ylimit}{(Optional) The upper limit of the y-axis.}
+}
 \description{
 Rank proposed PVA decision scenarios when biological parameters are increased or decreased by some percentage.
 }
