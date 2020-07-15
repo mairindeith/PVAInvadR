@@ -172,6 +172,10 @@ For the rest of the quick start guide, we're going to use `PVAInvadR`'s built-in
 
 Load the example dataset and save these parameters with the variable name `params`.
 
+```{r secretPackageLoad, echo = F}
+library(PVAInvadR)
+```
+
 ```{r dataload}
 data("fusee")
 params <- fusee
