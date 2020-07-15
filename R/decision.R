@@ -19,7 +19,7 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
   # Convert decision_ info into a readable format
   if(!is.null(decision_csv)){
     decision_setup = readr::read_csv(decision_csv, col_types = readr::cols())
-    
+    colnames(decision_setup) <- gsub("'", "", colnames(decision_setup))
   } else if(!is.null(decision_list)){
     scen_names = names(decision_list)
     param_names = names(decision_list[[1]])
