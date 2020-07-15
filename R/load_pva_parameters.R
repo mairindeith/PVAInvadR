@@ -1,10 +1,9 @@
 #' Load a .csv template of parameters. A blank template that matches the parameters needed by `PVAInvasR` can be created with the pva_template() function.
-#'
+#' @export
 #' @param filepath The path to the filled-in .csv template of population and control parameters.
 #' @return pva_parameters A list of population and control parameters for use in other `PVAInvasR` functions.
 #' @examples
 #' load_pva_parameters('~/Documents/PVA_Examples/filledin_parameter_template.csv')
-#' @export
 
 load_pva_parameters <- function(filepath) {
   if (is.null(filepath)){

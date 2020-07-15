@@ -1,6 +1,7 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
 #' @import ggplot2
 #' @import tidyr
+#' @export
 #' @param params A list of initialized population and control parameters to inform the PVA. Parameters should be provided in the form of a named list. We suggest filling in a parameter template, which can be created and loaded using the \code{pva_template()} and \code{load_pva_parameters()} functions.
 #' @param custom_inits (Optional, invoked by the `rank_uncertainty` function) A vector containing the names of which parameters, if any, should differ from the values provided in \code{pvA_params}. Should be a named list_ Can be be outputs of the \code{init()} function from \code{PVAInvas}.
 #' @param sens_percent (Optional, invoked by the `rank_uncertainty` function) For the sake of sensitivity analysis, how much should population parameters (i.e. \code{}, \code{}, \code{}, \code{}, \code{}, \code{}, \code{})
@@ -37,7 +38,6 @@
 #' @examples
 #' # Run a simple PVA, no custom values or sensitivity testing.
 #' pva(pva_params = inputParameterList)
-#' @export
 
 PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
   sens_params = NULL, create_plot = FALSE, set_plot_y = NULL, quiet = FALSE){

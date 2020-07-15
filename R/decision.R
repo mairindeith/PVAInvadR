@@ -1,6 +1,6 @@
 #' Run multiple PVA simulations initialized with different control scenarios to compare their simulated costs and outcomes.
 #' @import foreach
-#'
+#' @export
 #' @param params Original population and control parameters for the target species and control gear. See `load_pva_parameters`.
 #' @param decision_csv (One of decision_csv or decision_list must be provided) Path to a csv file containing scenario-specific control parameters to be used in decision making. May be created with `decision_setup`.
 #' @param decision_list (One of decision_csv or decision_list must be provided) An R list containing named parameters and associated values for each scenario. May be created with `decision_setup`.
@@ -19,6 +19,7 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
   # Convert decision_ info into a readable format
   if(!is.null(decision_csv)){
     decision_setup = readr::read_csv(decision_csv, col_types = readr::cols())
+    
   } else if(!is.null(decision_list)){
     scen_names = names(decision_list)
     param_names = names(decision_list[[1]])

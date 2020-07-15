@@ -1,5 +1,4 @@
 #' Save a .csv template of parameters. Once filled in, the csv template can be loaded using load_pva_parameters().
-#'
 #' @export
 #' @param filepath File path where the parameter template should be saved.
 #' @return Nothing - a parameter template will be saved at the file location provided.
