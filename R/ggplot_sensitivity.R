@@ -5,6 +5,7 @@
 #' @param ylimit (Optional) The upper limit of the y-axis.
 
 ggplot_sensitivity <- function(df, ylimit = NaN){
+  theme_set(theme_classic())
   pars <- c(expression(kappa),
             expression(paste("p"["cann"])),
             expression("A"),
@@ -44,15 +45,15 @@ ggplot_sensitivity <- function(df, ylimit = NaN){
     ggplot2::theme(
       #        panel.grid.major.x = element_blank(),
       panel.border = ggplot2::element_blank(),
-      axis.ticks.x = ggplot2::element_blank(),
-      axis.text = ggplot2::element_text(size=16),
-      axis.title = ggplot2::element_text(size=18),
-      strip.background = ggplot2::element_rect(fill = "#337AB7"),
-      strip.text = ggplot2::element_text(size=14, colour = "white")
+      axis.ticks.x = ggplot2::element_blank()
+      # axis.text = ggplot2::element_text(size=16),
+      # axis.title = ggplot2::element_text(size=18),
+      # strip.background = ggplot2::element_rect(fill = "#337AB7"),
+      # strip.text = ggplot2::element_text(size=14, colour = "white")
     ) +
     ggplot2::scale_x_discrete(name ="Parameter",
                      breaks = 1:length(pars),
-                     limits = 1:length(pars),
+                     limits = factor(1:length(pars)),
                      labels = pars) +
     ggplot2::facet_wrap(~scen, ncol=1)
   return(tmpplot)

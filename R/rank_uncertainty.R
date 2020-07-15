@@ -58,7 +58,7 @@ rank_uncertainty <- function(params, percent=0.15, decision_csv = NULL, decision
       }
       ind <- which(var_par == p)
       # Apply upper transformation +X%
-      tmp_inits_upper <- PVAInvadR::init(params, params_params = p, pcent_trans = upper_var, quiet = quiet)
+      tmp_inits_upper <- PVAInvadR::init(params, input_params = p, pcent_trans = upper_var, quiet = quiet)
       tmp_decision_upper <- PVAInvadR::decision(params, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_upper, direction = "upper", sens_percent = upper_var, sens_params = p, parallel = parallel, quiet = quiet)
 
       cost_T_u[,ind+1] <- tmp_decision_upper$annual_cost
@@ -74,7 +74,7 @@ rank_uncertainty <- function(params, percent=0.15, decision_csv = NULL, decision
       rm(tmp_decision_upper)
       gc()
       # Apply lower transformation -X%
-      tmp_inits_lower <- PVAInvadR::init(params, params_params = p, pcent_trans = lower_var, quiet = quiet)
+      tmp_inits_lower <- PVAInvadR::init(params, input_params = p, pcent_trans = lower_var, quiet = quiet)
       tmp_decision_lower <- PVAInvadR::decision(params, decision_csv = decision_csv, decision_list = decision_list, custom_inits = tmp_inits_lower, direction = "lower", sens_percent = lower_var, sens_params = p, parallel = parallel, quiet = quiet)
       cost_T_l[,ind+1] <- tmp_decision_lower$annual_cost
       p_extirp_l[,ind+1] <- tmp_decision_lower$p_eradication
@@ -188,34 +188,28 @@ rank_uncertainty <- function(params, percent=0.15, decision_csv = NULL, decision
     universal_legend <- cowplot::get_legend(pextirp_diff_plot + ggplot2::theme(panel.background = ggplot2::element_rect(fill = "white", colour = "white"),
                                                              plot.background = ggplot2::element_rect(fill = "white", colour = "white", size = 3))
     )
-    # save("universal_legend", file = "../universal_legend.Rdata")
     plot_list <- list(
-      "cost_rankdiff_plot" = cost_rankdiff_plot + ggplot2::theme(legend.position = "none"),
-      "cost_absolutediff_plot" = cost_diff_plot + ggplot2::theme(legend.position = "none"),
-      "nT_rankdiff_plot" = NT_rankdiff_plot + ggplot2::theme(legend.position = "none"),
-      "nT_absolutediff_plot" = NT_diff_plot + ggplot2::theme(legend.position = "none"),
-      "pExtirpation_rankdiff_plot" = pextirp_rankdiff_plot + ggplot2::theme(legend.position = "none"),
-      "pExtirpation_absolutediff_plot" = pextirp_diff_plot + ggplot2::theme(legend.position = "none"),
-      "plot_legend" = universal_legend
+      "cost_rankdiff_plot" = cost_rankdiff_plot, # + ggplot2::theme(legend.position = "none"),
+      "cost_absolutediff_plot" = cost_diff_plot, # + ggplot2::theme(legend.position = "none"),
+      "nT_rankdiff_plot" = NT_rankdiff_plot, # + ggplot2::theme(legend.position = "none"),
+      "nT_absolutediff_plot" = NT_diff_plot, # + ggplot2::theme(legend.position = "none"),
+      "pExtirpation_rankdiff_plot" = pextirp_rankdiff_plot, # + ggplot2::theme(legend.position = "none"),
+      "pExtirpation_absolutediff_plot" = pextirp_diff_plot # + ggplot2::theme(legend.position = "none"),
+      # "plot_legend" = universal_legend
     )
     data_list <- list()
-    data_list$cost_rankchange <- dplyr::rename(cost_T_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$cost_rankchange <- dplyr::select(data_list$cost_rankchange, Scenario, Increase_or_Decrease, Parameter, RankChange)
-
-    data_list$cost_absolutechange <- dplyr::rename(cost_T_diff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$cost_absolutechange <-  dplyr::select(data_list$cost_absolutechange, Scenario, Increase_or_Decrease, Parameter, RankChange)
-
-    data_list$nT_rankchange <- dplyr::rename(Nt_med_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$nT_rankchange <- dplyr::select(data_list$nT_rankchange, Scenario, Increase_or_Decrease, Parameter, RankChange)
-
-    data_list$nT_absolutechange <- dplyr::rename(Nt_med_diff_both, AbsoluteChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$nT_absolutechange <- dplyr::select(data_list$nT_absolutechange, Scenario, Increase_or_Decrease, Parameter, AbsoluteChange)
-
-    data_list$pExtirpation_rankchange <- dplyr::rename(p_extirp_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$pExtirpation_rankchange <- dplyr::select(data_list$pExtirpation_rankchange, Scenario, Increase_or_Decrease, Parameter, RankChange)
-
-    data_list$pExtirpation_absolutechange <- dplyr::rename(p_extirp_diff_both, AbsoluteChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
-    data_list$pExtirpation_absolutechange <- dplyr::select(data_list$pExtirpation_absolutechange, Scenario, Increase_or_Decrease, Parameter, AbsoluteChange)
+    data_list$cost_rankdiff <- dplyr::rename(cost_T_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$cost_rankdiff <- dplyr::select(data_list$cost_rankdiff, Scenario, Increase_or_Decrease, Parameter, RankChange)
+    data_list$cost_absolutediff <- dplyr::rename(cost_T_diff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$cost_absolutediff <-  dplyr::select(data_list$cost_absolutediff, Scenario, Increase_or_Decrease, Parameter, RankChange)
+    data_list$nT_rankdiff <- dplyr::rename(Nt_med_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$nT_rankdiff <- dplyr::select(data_list$nT_rankdiff, Scenario, Increase_or_Decrease, Parameter, RankChange)
+    data_list$nT_absolutediff <- dplyr::rename(Nt_med_diff_both, AbsoluteChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$nT_absolutediff <- dplyr::select(data_list$nT_absolutediff, Scenario, Increase_or_Decrease, Parameter, AbsoluteChange)
+    data_list$pExtirpation_rankdiff <- dplyr::rename(p_extirp_rankdiff_both, RankChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$pExtirpation_rankdiff <- dplyr::select(data_list$pExtirpation_rankdiff, Scenario, Increase_or_Decrease, Parameter, RankChange)
+    data_list$pExtirpation_absolutediff <- dplyr::rename(p_extirp_diff_both, AbsoluteChange = value, Scenario = scen, Parameter = key, Increase_or_Decrease = direction)
+    data_list$pExtirpation_absolutediff <- dplyr::select(data_list$pExtirpation_absolutediff, Scenario, Increase_or_Decrease, Parameter, AbsoluteChange)
 
     out_list <- list()
     out_list$sensitivity_plots <- plot_list

@@ -44,7 +44,7 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
     doParallel::registerDoParallel(n_cores)
     df <- foreach::foreach(sn = scenNames, .export = "decision_setup", .combine = "rbind") %dopar% {
       sn_idx <- which(scenNames == sn)
-      scenParams <- paramss # for each scenario, copy the existing paramss and modify as needed
+      scenParams <- params # for each scenario, copy the existing params and modify as needed
       if(quiet == F){
         message("Scenario ",sn_idx, ": ", sn)
       }
@@ -108,7 +108,7 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
   } else {
     df <- foreach(sn = scenNames, .combine = "rbind") %do% {
       sn_idx <- which(scenNames == sn)
-      scenParams <- paramss
+      scenParams <- params
       if(quiet == F){
         message("Scenario: ",sn)
       }

@@ -218,7 +218,7 @@ For this vignette, we will use option 1, the pop-up window.
 
 In this example, we will only modify a single parameter per scenario.
 _ScenarioA_ will increase the effort exerted by gear 1 on adults (parameter `E_A_1`) from 0 to 2.
-_ScenarioB_ will also increase the effort as above, and will also sample gear 1 at an earlier timestep in the year (parameter `t_start_A_1`) from 15 to 10.
+_ScenarioB_ will also increase the effort to 10, and will also sample gear 1 at an earlier timestep in the year (parameter `t_start_A_1`) from 15 to 10.
 
 Run `decision_setup`, select the parameters `E_A_1` and `t_start_A_1` to create a template .csv saved at `PATH/TO/DECISION_TEMPLATE.csv`.
 
@@ -241,19 +241,24 @@ The `decision` function will now simulate the defined scenarios and output a dec
 
 Now, all you need to do is run the `decision` function.
 `decision` requires the original parameter inputs, `params`, and the path to the scenario csv you just filled in (`decision_csv`, replace `PATH/TO/DECISION_TEMPLATE.csv` below to the file with your scenario-specific control parameters).
+You can also run the function in parallel by specifying `parallel = TRUE`.
+
+As `decision` runs, it will print which Scenario it is running and what control parameter values were supplied for this scenario.
 
 ```{r decision, eval = F}
-decision(params,
+dec <- decision(params,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
-  parallel = TRUE,
-  pretty = TRUE) # Turn off for a manipulatable data frame format
+  parallel = TRUE) # Turn off for a manipulatable data frame format
 ```
 
 ```{r decision_real, echo = F}
-decision(params,
-  decision_csv = "dec_template.csv",
-  parallel = TRUE,
-  pretty = TRUE) # Turn off for a manipulatable data frame format
+dec <- decision(params, decision_csv = "dec_template.csv", parallel = TRUE, pretty = TRUE) # Turn off for a manipulatable data frame format
+```
+
+`decision` returns a summary data frame with multiple utility values: annual and total cost, probability of eradication, expected time for eradication, and median abundance across PVA simulations of each scenario.
+
+```{r decision_out, echo = F}
+dec # Turn off for a manipulatable data frame format
 ```
 
 
@@ -271,15 +276,49 @@ Each biological parameter is varied one at a time (so the combined outcomes of m
 Then, the function will output decision ranking criteria when each
 
 Like above, let's run `rank_uncertainty` in parallel, using the `DECISION_TEMPLATE.csv` created earlier.
+Normally this function prints information regarding PVA simulations and intermediate results as it runs.
+For now, let's turn this printing off by specifying `quiet = T`.
+
+`rank_uncertainty` may take up to a few minutes to run, depending on your computer's hardware (especially number of cores available to compare scenarios in parallel.
 
 ```{r rankuncertainty_dummy, eval = F}
-rank_uncertainty(params,
-  decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
-  parallel = TRUE)
+ru <- rank_uncertainty(params, decision_csv = "PATH/TO/DECISION_TEMPLATE.csv", parallel = TRUE, quiet = TRUE)
 ```
 
 ```{r rankuncertainty_real, echo = F}
-rank_uncertainty(params,
-  decision_csv = "dec_template.csv",
-  parallel = TRUE) # Turn off for a manipulatable data frame format
+ru <- rank_uncertainty(params, decision_csv = "dec_template.csv", parallel = TRUE)
 ```
+
+The output of `rank_uncertainty` is a named list with two entries: `sensitivity_plots` and `sensitivity_data`.
+
+Both `sensitivity_plots` and `sensivity_data` contain 6 objects (plot objects also have the `_plot` suffix in their names).
+
+- `cost_rankdiff` - using total cost as a performance measure, compare scenarios' **change in rank** after increasing or decreasing each biological parameter by some percent
+- `cost_absolutediff` - like above, but reporting **absolute difference in cost** instead of change of rank
+- `nT_rankdiff` - like above, but report change in rank using population size of the invasive species as the performance measure
+- `nT_absolutediff` - like above, but report **absolute change in population size** instead of change of rank
+- `pExtirpation_rankdiff` - like above, but report probability of extinction of the invasive population as the performance measure
+- `pExtirpation_absolutediff` - like above, but report **absolute change in extirpation probability** instead of change of rank
+
+Data in these objects compare how each scenario performs compared to the default biological parameters (i.e. a rank difference of 1 indicates that the scenario ranks 1 higher than it did under the default conditions; an absolute difference of -12 indicates that the performance indicator is 12 units lower than the default case).
+
+For example, here's the absolute difference in population size:
+
+``{r rankuncertainty_outdata}
+ru$sensitivity_data$nT_absolutediff
+```
+
+Plots summarize the data in the `_data` object using a lollipop plot.
+Here's the same data in plot form.
+
+``{r rankuncertainty_outplot}
+ru$sensitivity_plots$nT_absolutediff_plot
+```
+
+If the scenario ranking doesn't change after sensitivity testing, all differences = 0.
+
+``{r rankuncertainty_outplotzero}
+ru$sensitivity_plot$cost_rankdiff_plot
+```
+
+For more details on `PVAInvadR` and how the model works internally, see [the Comprehensive User Guide vignette](comprehensive-user-guide.html).
