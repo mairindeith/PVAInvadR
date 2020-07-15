@@ -1,4 +1,5 @@
 #' Plot the outputs of a PVA simulation.
+#' @export
 #' @param pva List of outputs created by running the PVA() function.
 #' @return List of
 #' * A list of PVA outputs, including calculated parameters:

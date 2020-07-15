@@ -1,5 +1,6 @@
 # Helper function used by plot_pva
 #' @import ggplot2
+#' @export
 
 vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set_ymax=NULL){
   dt <- input$dt

@@ -1,4 +1,5 @@
 #' Using imported population and control parameters, run a population viability analysis (PVA) on the target species.
+#' @export
 #' @import ggplot2
 #' @import tidyr
 #' @export
