@@ -1,8 +1,8 @@
-# Helper function used by plot_pva
+# Helper function used by PVA
 #' @import ggplot2
 #' @export
 
-vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb", quiet = FALSE)(40), set_ymax=NULL){
+vwReg2 <- function(data, input, quiet = FALSE, palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set_ymax=NULL){
   dt <- input$dt
   nT <- input$nT*dt
   n_sim <- input$n_sim

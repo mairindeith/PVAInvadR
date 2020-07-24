@@ -17,6 +17,11 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r, echo = FALSE}
+devtools::install_github("mairindeith/PVAInvadR")
+library(PVAInvadR)
+```
+
 ## Step 0: Installing the Package
 
 `PVAInvadR` is available from a public GitHub repository.
