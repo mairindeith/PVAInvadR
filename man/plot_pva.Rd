@@ -4,7 +4,7 @@
 \alias{plot_pva}
 \title{Plot the outputs of a PVA simulation.}
 \usage{
-plot_pva(pva, set.ymax = NULL)
+plot_pva(pva, set.ymax = NULL, quiet = FALSE)
 }
 \arguments{
 \item{pva}{List of outputs created by running the PVA() function.}
@@ -21,8 +21,6 @@ List of
 
 and PVA-generated calculations for each iteration of the simulation
  - `N1`: initial population size per simulation,
-
-)
 }
 \description{
 Plot the outputs of a PVA simulation.
