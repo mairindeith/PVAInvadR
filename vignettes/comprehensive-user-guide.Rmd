@@ -343,7 +343,6 @@ Recruitment in the following years is based on survival through each pre-recruit
   N_{t, s+1} = BIN
 \end{equation}
 
-
 # Running the model and use for decision support {#modelrun}
 
 ## Evaluating a single removal strategy with `PVA`

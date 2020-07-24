@@ -254,7 +254,7 @@ PVA <- function(params, custom_inits = NULL, sens_percent = NULL,
     names(data) <- rep("y",n_sim)
     data$x <- (1:nT)*dt
     # Pulls in vwReg2
-    out$plot <- vwReg2(data=data,input=params,set_ymax=set_plot_y, quiet = quiet)
+    out$plot <- PVAInvadR::vwReg2(data=data,input=params,set_ymax=set_plot_y, quiet=quiet)
   }
   return(out)
   gc()

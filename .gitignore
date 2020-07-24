@@ -8,9 +8,12 @@
 
 # Session Data files
 .RData
+
+# Save files and Vignette building files to ignore
 .csv
 .pdf
 .html
+.log
 
 # User-specific files
 .Ruserdata

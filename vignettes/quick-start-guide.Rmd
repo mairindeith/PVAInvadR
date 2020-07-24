@@ -294,6 +294,7 @@ ru <- rank_uncertainty(params, decision_csv = "PATH/TO/DECISION_TEMPLATE.csv", p
 
 ```{r rankuncertainty_real, echo = F}
 ru <- rank_uncertainty(params, decision_csv = "dec_template.csv", parallel = TRUE)
+saveRDS(ru, "RankUncertaintySaver.rds")
 ```
 
 The output of `rank_uncertainty` is a named list with two entries: `sensitivity_plots` and `sensitivity_data`.
