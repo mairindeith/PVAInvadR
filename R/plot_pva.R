@@ -13,9 +13,9 @@
 #' and PVA-generated calculations for each iteration of the simulation
 #'  - `N1`: initial population size per simulation,
 #'
-#' )
+#'
 
-plot_pva <- function(pva, set.ymax=NULL){
+plot_pva <- function(pva, set.ymax=NULL, quiet = FALSE){
 # "heat.proj" <- function(pva){
   n.sim <- pva$n.sim
   dt <- pva$dt                   # time-step in years
@@ -34,6 +34,6 @@ plot_pva <- function(pva, set.ymax=NULL){
   if(!is.null(set.ymax)){
     set.ymax<-input$set.ymax
   }
-  out$plot <- vwReg2(data=data,input=pva,set.ymax=set.ymax)
+  out$plot <- vwReg2(data=data,input=pva,set.ymax=set.ymax, quiet = quiet)
   return(out)
 }

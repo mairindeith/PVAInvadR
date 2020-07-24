@@ -2,7 +2,7 @@
 #' @import ggplot2
 #' @export
 
-vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb")(40), set_ymax=NULL){
+vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green","yellow","orange","red"), bias=2, space="rgb", quiet = FALSE)(40), set_ymax=NULL){
   dt <- input$dt
   nT <- input$nT*dt
   n_sim <- input$n_sim
@@ -16,19 +16,26 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
   # p0 <- ggplot2::ggplot(data, x=x, y=y) + theme_bw()
   # initialize elements with NULL (if they are defined, they are overwritten with something meaningful)
   gg.tiles <- NULL
-  cat("Computing density estimates for each vertical cut ...\n")
-  flush.console()
-  cat("ymax")
-  ymax <- as.integer(log10(max(data)))-1
-  ifelse(is.null(set_ymax),
-         ylim <- c(0,as.integer(max(data)/ymax+1)*ymax),
-         ylim <- c(0,set_ymax))
-  d2 <- plyr::ddply(b2[, c("x", "value")], "x", function(df) { #.(x),
-    res <- data.frame(density(df$value, na.rm=TRUE, n=n_sim, bw=ylim[2]/100,from=ylim[1], to=ylim[2])[c("x", "y")])
-    colnames(res) <- c("y", "dens")
-    return(res)
-  }, .progress="text")
-#  cat("maxdens")
+  if(!quiet){
+    cat("Computing density estimates for each vertical cut ...\n")
+    flush.console()
+    cat("ymax")
+    ymax <- as.integer(log10(max(data)))-1
+    ifelse(is.null(set_ymax),
+           ylim <- c(0,as.integer(max(data)/ymax+1)*ymax),
+           ylim <- c(0,set_ymax))
+    d2 <- plyr::ddply(b2[, c("x", "value")], "x", function(df) { #.(x),
+      res <- data.frame(density(df$value, na.rm=TRUE, n=n_sim, bw=ylim[2]/100,from=ylim[1], to=ylim[2])[c("x", "y")])
+      colnames(res) <- c("y", "dens")
+      return(res)
+    }, .progress="text")
+  } else {
+    d2 <- plyr::ddply(b2[, c("x", "value")], "x", function(df) { #.(x),
+      res <- data.frame(density(df$value, na.rm=TRUE, n=n_sim, bw=ylim[2]/100,from=ylim[1], to=ylim[2])[c("x", "y")])
+      colnames(res) <- c("y", "dens")
+      return(res)
+    })
+  }
   maxdens <- max(d2$dens,na.rm=TRUE)
   mindens <- min(d2$dens,na.rm=TRUE)
   d2$Density <- (d2$dens - mindens)/maxdens
@@ -40,8 +47,6 @@ vwReg2 <- function(data,input,palette=colorRampPalette(c("purple4","blue","green
                                            alpha=alpha.factor)),
                     ggplot2::scale_fill_gradientn("Density\n", colours=palette),
                     ggplot2::scale_alpha_continuous(range=c(0.001, 0.999),guide="none"))
-#  cat("Build ggplot figure ...\n")
-#  flush.console()
   gg.elements <- list(gg.tiles)
   pOut = p0 + gg.elements + ggplot2::xlab("Year") + ggplot2::ylab("Recruited population numbers") +
            ggplot2::theme(text = ggplot2::element_text(size=18), legend.key.height=ggplot2::unit(2,"cm"))
