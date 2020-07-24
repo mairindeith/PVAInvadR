@@ -9,6 +9,8 @@
 # Session Data files
 .RData
 .csv
+.pdf
+.html
 
 # User-specific files
 .Ruserdata

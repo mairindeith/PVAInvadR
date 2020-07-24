@@ -1,6 +1,9 @@
 ---
 title: "PVAInvadR Quick Start Guide"
-output: rmarkdown::html_vignette
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{quick-start-guide}
   %\VignetteEngine{knitr::rmarkdown}
@@ -182,10 +185,10 @@ params <- fusee
 ```
 
 Using these input parameters, let's run a PVA and save the results to `pva_results`.
-Let's also include a plot of simulated abundance over time by setting `create_plot = TRUE`.
+Let's also include a plot of simulated abundance over time by setting `create_plot = TRUE`. For the sake of this vignette, we are going to run the command with `quiet = TRUE`, but you can remove this to see output information, like the progress of the PVA simulations and plotting.
 
 ```{r firstpva}
-pva_results <- PVA(params, create_plot = TRUE)
+pva_results <- PVA(params, create_plot = TRUE, quiet = TRUE)
 ```
 
 `PVA` returns a number of objects in the form of a named list,
@@ -307,21 +310,21 @@ Both `sensitivity_plots` and `sensivity_data` contain 6 objects (plot objects al
 Data in these objects compare how each scenario performs compared to the default biological parameters (i.e. a rank difference of 1 indicates that the scenario ranks 1 higher than it did under the default conditions; an absolute difference of -12 indicates that the performance indicator is 12 units lower than the default case).
 
 For example, here's the absolute difference in population size:
-
-``{r rankuncertainty_outdata}
+  
+```{r rankuncertainty_outdata}
 ru$sensitivity_data$nT_absolutediff
 ```
 
 Plots summarize the data in the `_data` object using a lollipop plot.
 Here's the same data in plot form.
 
-``{r rankuncertainty_outplot}
+```{r rankuncertainty_outplot}
 ru$sensitivity_plots$nT_absolutediff_plot
 ```
 
-If the scenario ranking doesn't change after sensitivity testing, all differences = 0.
+If the scenario ranking doesn't change after sensitivity testing, all differences = 0. For example, there is no change in rank when considering cost after modifying biological parameters. 
 
-``{r rankuncertainty_outplotzero}
+```{r rankuncertainty_outplotzero}
 ru$sensitivity_plot$cost_rankdiff_plot
 ```
 

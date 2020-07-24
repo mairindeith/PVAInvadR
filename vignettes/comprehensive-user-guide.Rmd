@@ -1,8 +1,13 @@
 ---
 title: "PVAInvasR Comprehensive User Guide"
+author: "Brett van Poorten and Mairin Deith"
 output:
+  rmarkdown::pdf_document:
+    highlight: zenburn
+    toc: yes
+    toc_depth: 3
   rmarkdown::html_vignette:
-    toc: true
+    toc: yes
     toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{under-the-hood-calculations}
@@ -158,6 +163,8 @@ _When these user-input parameters are used to derive other parameters below, use
 
 ## Derived parameters and calculations
 
+### Length, weight, and fecundity at age
+
 From the biological parameters above, `PVAInvadR` derives stock-recruit parameters from calculations of equilibrium population structure when the population is unexploited.
 Length, weight, and fecundity at age $a$ ($l_a$, $w_a$, and $f_a$, equations 1-3) are calculated first, then instantaneous length-based mortality based on the Lorenzen model (such that mortality is inversely related to length; equation 4, [Lorenzen 2000](#refs)).
 
@@ -175,6 +182,8 @@ Length, weight, and fecundity at age $a$ ($l_a$, $w_a$, and $f_a$, equations 1-3
   \label{eq:3}
   f_a = afec^{*} (w_a - Wmat^{*})
 \end{equation}
+
+### Mortality at age (with and without cannibalism)
 
 Asymptotic mortality rate is calculated from $A^{*}$, the maximum age observed in the population, which is assumed to have a lifetime survivorship of 1% (i.e. 1% of recruited animals live to age = $A^{*}$).
 $M_{\infty}$, minimum instantaenous mortality, is back-calculated similar to the method of [Hoenig (1983)](#refs).
@@ -196,7 +205,7 @@ Survival of each age group follows [Lorenzen 2000](#refs), which can then be use
   \label{eq:6}
   lx_a = \begin{cases}
   1 & \text{ if } a = AR^{*}\\
-  \prod^{a-1}_{a=AR^{*}} S_a & \text{ if } a > AR^{*}
+  \prod_{a=AR^{*}}^{a-1} S_a & \text{ if } a > AR^{*}
   \end{cases}
 \end{equation}
 
@@ -204,24 +213,136 @@ The product of survivorship and fecundity-at-age for females then provides equil
 
 \begin{equation}
   \label{eq:7}
-  \phi_0 = \Sigma^{A^{*}}_{a=1} \frac{lx_a f_a spn_a}{2}
+  \varphi_0 = \sum^{A^{*}}_{a=1} \frac{lx_a f_a spn_a}{2}
 \end{equation}
 
-Beverton-Holt parameters for each stanza, $s$, are influenced by stanza-specific relative mortality and habitat capacity (which scale mortality by density of competitors within a cohort; ([Walters and Korman, 1999](#refs); [Pine et al., 2013](#refs))). Below,
+Beverton-Holt parameters for each stanza, $s$, are influenced by stanza-specific relative mortality $M_s$ and habitat capacity (which scale mortality by density of competitors within a cohort; ([Walters and Korman, 1999](#refs); [Pine et al., 2013](#refs)).
 
 \begin{equation}
   \label{eq:8}
-  \alpha_s = \frac{K}{\phi_0} e^ {\left ( \frac{M_s^{*}}{\Sigma M_s^{*}} \right )}
+  \alpha_s = \frac{K}{\varphi_0} e^ {\left ( \frac{M_s^{*}}{\sum M_s^{*}} \right )}
 \end{equation}
 
 \begin{equation}
   \label{eq:9}
-  \beta_s = Bs^{*} \frac{K^{*}-1}{R0^{*}\phi_0 \Sigma_{s'} \left ( \beta_{s'} \prod_{s''=0}^{s''=s'-1} \alpha_{s''}\right )}
+  \beta_s = Bs^{*} \frac{K^{*}-1}{R0^{*}\varphi_0 \sum_{s'} \left ( \beta_{s'} \prod_{s''=0}^{s''=s'-1} \alpha_{s''}\right )}
 \end{equation}
 
-In cases where cannibalism occurs in pre-recruit stanzas (i.e. $p_cann^{*} > 0$), maximum survival for each stanza is then also modified as a log-linear function of cannibal abundance (based on the reformulation of the Beverton-Holt model, see: [Walters and Korman, 1999](#refs).
+Stanza-specific mortality at low stock size $M_{0,s}$, is defined by:
 
-**HERE IS WHERE I AM CONFUSED**
+\begin{equation}
+  \label{eq:10}
+  M_{0,s} = -ln (\alpha_s) = \rho_s + \tau_s \right [ R_0 \sum_{a = cann_a} (lx_a spn_a) \left ]
+\end{equation}
+
+```{r, eval=F, echo=F}
+
+### FROM HERE ON OUT: The asterisk notation needs to be checked.
+
+```
+
+**At higher abundances:**
+
+\begin{equation}
+  \label{eq:11}
+  M_{1,s} = \frac{\beta_s M_{0,s}}{1 - \alpha_s}
+\end{equation}
+  
+In cases where cannibalism occurs in pre-recruit stanzas (i.e. $`p_cann`^{*} > 0$), maximum survival for each stanza is then also modified as a log-linear function of cannibal abundance (based on the reformulation of the Beverton-Holt model, see: [Walters and Korman, 1999](#refs):
+
+\begin{equation}
+  \label{eq:12}
+  R = \frac{N_0 e^{-M_0}}{1 + \frac{M_1}{M_0} \left ( 1 - e^{-M_0} \right ) }
+\end{equation}
+
+$e^{-M_0}$ is maximum survival at low spawning stock, and $\frac{M_1}{M_0}\left ( 1-e^{-M_0} \right )$ is the carrying capacity parameter. 
+
+When cannibalism occurs, stanza-specific mortality at low stock size $M_{0,s}$ can be modified as a function of likely cannibalistic age-classes:
+
+\begin{equation}
+  \label{eq:13}
+  M_{0,s} = \rho_s + \tau_s C
+\end{equation}
+
+Users input which ages cannibalise and its effect with $\rho$, mortality independent of cannibalism; $\tau$, the cannibalism dependent parameter; and $C$, the sum of animals in age classes where cannibalism may occur. 
+
+\begin{equation}
+  \label{eq:14}
+  \rho_s = M_{0, s} (1-p_{cann})
+\end{equation}
+
+\begin{equation}
+  \label{eq:15}
+  \tau_s = M_{0,s} \frac{p_{cann}}{R_0 \sum_{a = cann_a}(lx_a spn_a)}}
+\end{equation}
+
+This results in a Ricker-like recruitment (e.g. overcompensation at high spawner abundance). 
+
+### Initializing populations
+
+#### Initially high abundance populations (starting at >90% of carrying capacity)
+
+There are two ways to determine the number of recruited animals in the first year, $t = 1$. If abundance is close to carrying capacity (i.e. $V_1 \geq 0.9 R_0 \sum lx_a$), abundance is randomly allocated among age classes (assuming a multinomial distribution):
+
+\begin{equation}
+  \label{eq:16a}
+  N_{t=1,a} \sim Mult(V_1^*, lx_a, e^{\epsilon_a}); \epsilon_a \mathcal{N}(0, \sigma_R)
+\end{equation}
+
+Random year class strength is given by $\epsilon_a$ above. This is a useful approximatino if the population is close to carrying capacity. **However, it will under-represent early year classes if the population is still growing** (owing to the steady state assumption).
+If the initial abundance is low, there is also a chance that all mature year-classes will be empty, causing a lag in egg production in early years; this will result in population growth being low in the first few years (depending on generation time). 
+
+#### Initially low abundance (starting at <90% of carrying capacity)
+
+If initial abundance is less than 90% of carrying capacity, initial age structure is created by deterministically simulating the population from low abundance (i.e. with $10e^{-15}$) recruits until the population reaches the user-defined starting abundance $V_1^*$. 
+
+First, the abundance of each age class is calculated:
+
+\begin{equation}
+  \label{eq:16b}
+  N_{t=1,a}^{i} = N_{t-1, a-1}^{i} S_{a-1}
+\end{equation}
+
+where $N^{i}$ indicates the numbers in initialization. The product of numbers-at-age and fecundity-at-age (equation 3) are used to calculate egg production in the first year ($E_{t=1}$; using the stage-independent Beverton-Holt function). 
+
+\begin{equation}
+  \label{eq:17}
+  N_{t, a=1}^i = \frac{E^i_{t-1} e^{-(\rho + \tau C_t)}}{1 + \frac{e^{-(\rho + \tau C_t)}}{M_1} \left ( 1 - e^{-(\rho + \tau C_t)} \right )}
+\end{equation}
+
+\begin{equation}
+  \label{eq:18}
+  M_1 = \frac {\left ( K^{*} - 1 \right ) ln \left( \frac{K^{*}}{\varphi_0} \right )}{R_0 \left( K^{*} - \varphi_0 \right ) }
+\end{equation}
+
+\begin{equation}
+  \label{eq:19}
+  \rho = -ln \left ( \frac{K^{*}}{\varphi_0} \right ) \left ( 1 - p_{cann} \right )
+\end{equation}
+
+\begin{equation}
+  \label{eq:20}
+  \tau = -ln \left ( \frac{K^{*}}{\varphi_0} \right ) \frac{p_{cann}}{R_0 \sum_{a = cann_a} \left ( lx_a spn_a \right )}
+\end{equation}
+
+Equations 18-20 are stage-independent analogues to equations 11, 14, and 15. 
+
+### Subsequent egg production and recruitment
+
+Regardless of how the population is initiated, egg production in the first year is given by:
+
+\begin{equation}
+  \label{eq:21}
+  E_{t=1,a} = \sum_{i=1}^{N_t=1} f_a
+\end{equation}
+
+Recruitment in the following years is based on survival through each pre-recruit stanza. Survival from one stanza to the next is given by the product of focused removals and the stanza-specific stock-recruitment function:
+
+\begin{equation}
+  \label{eq:22}
+  N_{t, s+1} = BIN
+\end{equation}
+
 
 # Running the model and use for decision support {#modelrun}
 
@@ -229,7 +350,7 @@ In cases where cannibalism occurs in pre-recruit stanzas (i.e. $p_cann^{*} > 0$)
 
 ## Evaluating multiple removal stratgies with `decision`
 
-## Evaluating multiple removal strategies under biological uncertainty with `rank_uncertainty
+## Evaluating multiple removal strategies under biological uncertainty with `rank_uncertainty`
 
 # References {#refs}
 
