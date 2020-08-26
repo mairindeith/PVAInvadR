@@ -26,7 +26,7 @@ knitr::opts_chunk$set(
 library(PVAInvasR)
 ```
 
-For a simpler introduction to `PVAInvadR`, check out the (quick start guide vignette)[quick-start-guide.html].
+For a simpler introduction to `PVAInvadR`, check out the [quick start guide vignette](quick-start-guide.html).
 
 #Introduction
 
@@ -60,6 +60,9 @@ Below are tables of the biological, control, and PVA parameters necessary to run
 
 ```{r bioParamTable, echo = F}
 library(knitr)
+library(dplyr)
+library(kableExtra)
+
 param_names <- c(
   'species',
   'A',
@@ -108,13 +111,13 @@ notes <<- c(
   'Age at recruitment (years)',
   'Number of pre-recruit stanzas',
   'Length of simulation (number of years)',
-  'Time-step length as a proportion of one year (<1 means more than 1 time step per year)',
+  'Time-step length as a proportion of one year (<1 means more than 1 time step per \n year)',
   'Number of simulations',
   'Number of gears applied to recruited animals',
   'Time-step when removal starts for each pre-recruit stanza',
   'Time-step when removal starts for each gear used on recruited animals',
   'Range of unfished recruited abundance',
-  'Recruitment compensation ratio (difference in juvenile survival between unfished and near-zero density)',
+  'Recruitment compensation ratio (difference in juvenile survival between unfished \n and near-zero density)',
   'Proportion of mortality at equilibrium that is due to cannibalism',
   'von Bertalanffy growth parameter',
   'Fecundity multiplier on weight',
@@ -137,40 +140,64 @@ notes <<- c(
   'Effort-based cost associated with each recruit capture gear',
   'Discount rate (optional)',
   'Generation time (optional)',
-  'Logistic ascending slope of removal gear for recruited animals (as a proportion of Linf)',
-  'Ascending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
-  'Logistic descending slope of removal gear for recruited animals (as a proportion of Linf)',
-  'Descending length at 50% selectivity of removal gear for recruited animals (as a proportion of Linf)',
+  'Logistic ascending slope of removal gear for recruited animals (as a proportion \nof Linf)',
+  'Ascending length at 50% selectivity of removal gear for recruited animals (as a \nproportion of Linf)',
+  'Logistic descending slope of removal gear for recruited animals (as a proportion \nof Linf)',
+  'Descending length at 50% selectivity of removal gear for recruited animals (as a \n proportion of Linf)',
   '(Optional) Initial age structure in the population'
 )
+
 file_out <- data.frame(
   Parameters = param_names,
   # values = "",
   Description = notes
 )
+
 # Rows for biological params
 biol_rows <- c(1:4, 11:23, 39)
 # Rows for control params
 control_rows <- c(8:10, 24:38)
 # Rows for PVA params
 pva_rows <- c(5:7)
-kable(file_out[biol_rows,], align='l', row.names = NA, caption = "Biological parameters")
-kable(file_out[control_rows,], align='l', row.names = NA, caption = "Control parameters")
-kable(file_out[pva_rows,], align='l', row.names = NA, caption = "PVA parmaters")
+
+knit_table <- function(df, caption){
+  if (is_html_output()) {
+    df %>%
+      kable("html", escape = F, caption = caption) %>%
+      kable_styling()
+  } else {
+    df <- data.frame(lapply(df, function(x) {gsub("<br>", "\n", x)}), stringsAsFactors = F)
+
+    df %>%  
+      mutate_all(linebreak) %>%
+      kable("latex", booktabs = T, escape = F, caption = caption)  
+  }
+}
+
+
+knit_table(file_out[biol_rows,], caption = "Biological parameters")
+knit_table(file_out[control_rows,], caption = "Control parameters")
+knit_table(file_out[pva_rows,], caption = "PVA parmaters")
+
+# pandoc.table(file_out[biol_rows,], wrap text in  align='l', row.names = NA, caption = "Biological parameters")
+# pandoc.table(file_out[control_rows,], wrap text in  align='l', row.names = NA, caption = "Control parameters")
+# pandoc.table(file_out[pva_rows,], wrap text in  align='l', row.names = NA, caption = "PVA parmaters")
 ```
 
-_When these user-input parameters are used to derive other parameters below, user-defined parameters are marked with an asterisk ($*$). For example, calculations that use maximum age, A, is indicated with $A^{*}$_.
+_When these user-input parameters are used to derive other parameters below, user-defined parameters are marked with an asterisk ($*$). For example, calculations that use maximum age, A, is indicated with $A^{\text{*}}$_.
 
-## Derived parameters and calculations
+## Derived parameters and population simulations
 
 ### Length, weight, and fecundity at age
 
-From the biological parameters above, `PVAInvadR` derives stock-recruit parameters from calculations of equilibrium population structure when the population is unexploited.
+Using the user-input parameters (those listed in the above table), `PVAInvadR` simulates the population dynamics of the exploited population.
+First, `PVAInvadR` derives stock-recruit parameters from calculations of equilibrium population structure when the population is unexploited.
+
 Length, weight, and fecundity at age $a$ ($l_a$, $w_a$, and $f_a$, equations 1-3) are calculated first, then instantaneous length-based mortality based on the Lorenzen model (such that mortality is inversely related to length; equation 4, [Lorenzen 2000](#refs)).
 
 \begin{equation}
   \label{eq:1}
-  l_a = 1 - e^{-K^{\*} a}
+  l_a = 1 - e^{-K^{\text{\text{*}}} a}
 \end{equation}
 
 \begin{equation}
@@ -180,122 +207,94 @@ Length, weight, and fecundity at age $a$ ($l_a$, $w_a$, and $f_a$, equations 1-3
 
 \begin{equation}
   \label{eq:3}
-  f_a = afec^{*} (w_a - Wmat^{*})
+  f_a = afec^{\text{*}} (w_a - Wmat^{\text{*}})
 \end{equation}
 
 ### Natural mortality
 
-Asymptotic mortality rate is calculated from $A^{\*}$, the maximum age observed in the population, which is assumed to have a lifetime survivorship of 1% (i.e. 1% of recruited animals live to age = $A^{\*}$).
-$M_{\infty}$, minimum instantaenous mortality, is back-calculated similar to the method of [Hoenig (1983)](#refs).
+#### Adult natural mortality
+
+Natural mortality rate is asymtomatic and calculated from $A^{\text{\text{*}}}$, the maximum age observed in the population. This maximum age is assumed to have a lifetime survivorship of 1% (i.e. 1% of recruited animals live to age = $A^{\text{\text{*}}}$).
+$M_{\infty}$, minimum instantaneous mortality, is back-calculated similar to the method of [Hoenig (1983)](#refs).
 
 \begin{equation}
   \label{eq:4}
-  M_{\infty} = \frac{ln(0.01)K^{\*}}{ln(l_{a=AR^{\*}}) - ln \left [ l_{a=AR^{\*}} + e^{\frac{K^{\*}(A^{*} - AR^{\*})}{dt^{\*}}}-1 \right ]}
+  M_{\infty} = \frac{ln(0.01)K^{\text{\text{*}}}}{ln(l_{a=AR^{\text{\text{*}}}}) - ln \left [ l_{a=AR^{\text{\text{*}}}} + e^{\frac{K^{\text{\text{*}}}(A^{\text{*}} - AR^{\text{\text{*}}})}{dt^{\text{\text{*}}}}}-1 \right ]}
 \end{equation}
 
-Survival of each age group follows [Lorenzen 2000](#refs), which can then be used to calcualte survivorship to each age ($lx_a$):
+From this, survival *of* each age group follows [Lorenzen 2000](#refs).
 
 \begin{equation}
   \label{eq:5}
   S_a = \left (
-    \frac{l_a}{l_a + e^{K^{\*}*dt^{*}}-1}\right )^\frac{M_{\infty}}{K^{\*}}
+    \frac{l_a}{l_a + e^{K^{\text{\text{*}}}*dt^{\text{*}}}-1}\right )^\frac{M_{\infty}}{K^{\text{\text{*}}}}
 \end{equation}
+
+Then, survivorship *to* each age ($lx_a$) is calculated:
 
 \begin{equation}
   \label{eq:6}
   lx_a = \begin{cases}
-  1 & \text{ if } a = AR^{\*}\\
-  \prod_{a=AR^{*}}^{a-1} S_a & \text{ if } a > AR^{\*}
+  1 & \text{ if } a = AR^{\text{\text{*}}}\\
+  \prod_{a=AR^{\text{*}}}^{a-1} S_a & \text{ if } a > AR^{\text{\text{*}}}
   \end{cases}
 \end{equation}
 
-The product of survivorship and fecundity-at-age for females then provides equilibrium spawners per recruit based on the ages when spawning occurs (i.e. where $spn_a = 1$; non-spawning ages are indicated with $spn_a = 0$), which is used to calculate Beverton-Holt recruitment parameters ([Walters and Martell, 2004](#refs)).
+The product of survivorship and fecundity-at-age for females then provides equilibrium spawners per recruit based on the ages when spawning occurs (i.e. where $spn_a = 1$; non-spawning ages are indicated with $spn_a = 0$).
 
 \begin{equation}
   \label{eq:7}
-  \varphi_0 = \sum^{A^{\*}}_{a=1} \frac{lx_a f_a spn_a}{2}
+  \varphi_0 = \sum^{A^{\text{\text{*}}}}_{a=1} \frac{lx_a f_a spn_a}{2}
 \end{equation}
 
-Beverton-Holt parameters for each stanza, $s$, are influenced by stanza-specific relative mortality $M_s$ and habitat capacity (which scale mortality by density of competitors within a cohort; ([Walters and Korman, 1999](#refs); [Pine et al., 2013](#refs)).
+The age indicator is used to calculate Beverton-Holt recruitment parameters ([Walters and Martell, 2004](#refs)).
+
+For pre-recruits, Beverton-Holt parameters are calculated for each stanza, $s$.
+The Beverton-Holt parameters are influenced by stanza-specific relative mortality, $M_s$, habitat capacity (which scales mortality by density of competitors within a cohort; ([Walters and Korman, 1999](#refs); [Pine et al., 2013](#refs)), and cannibalism if it occurs.
+
+This form of the Beverton-Holt model is from [Walters and Korman's (1999)](#refs) reformulation:
 
 \begin{equation}
   \label{eq:8}
-  \alpha_s = \frac{K}{\varphi_0} e^ {\left ( \frac{M_s^{\*}}{\sum M_s^{\*}} \right )}
+  R = \frac{N_0 e^{-M_0}}{1 + \frac{M_1}{M_0} \left ( 1 - e^{-M_0} \right ) }
 \end{equation}
+
+Here, $e^{-M_0}$ is maximum survival at low spawning stock and $\frac{M_1}{M_0} \left ( 1 - e^{-M_0}\right )$ is the carrying capacity parameter.
+
+When cannibalism occurs, $M_0$ can be modified by combining stanza-specific mortality without cannibals ($\rho_s$) with the product of likely cannibalistic age classes $C$ and the cannibalism dependent parameter, $\tau$.
 
 \begin{equation}
-  \label{eq:9}
-  \beta_s = Bs^{\*} \frac{K^{\*}-1}{R0^{\*}\varphi_0 \sum_{s'} \left ( \beta_{s'} \prod_{s''=0}^{s''=s'-1} \alpha_{s''}\right )}
+\label{eq:9}
+M_{0,s} = \rho_s + \tau C = \rho_s + \tau \left [ R_0 \sum_{a = \text{cann_a}^{\text{*}}} \left (
+  lx_a spn_a
+  \right )
+  \right ]
 \end{equation}
-
-Stanza-specific mortality at low stock size $M_{0,s}$, is defined as:
 
 \begin{equation}
   \label{eq:10}
-  M_{0,s} = -ln (\alpha_s)
+  \tau_s = M_s^0 \frac{\text{p_cann}}{R_0 \sum_{a = \text{cann_a}^{\text{*}}} \left (
+    lx_a spn_a
+    \right )}
 \end{equation}
 
-When cannibalism occurs, stanza-specific mortality at low stock size $M_{0,s}$ can be modified as a function of likely cannibalistic age-classes:
+Alternatively, mortality can be expressed by:
 
 \begin{equation}
-  \label{eq:11a}
-  M_{0,s} = \rho_s + \tau_s \right [ R_0 \sum_{a = cann_a} (lx_a spn_a) \left ]
+\label{eq:11}
+M_{0,s} = -ln (\alpha_s)
 \end{equation}
 
-Here, $\rho$ refers to mortality rates when cannibalism does not occur, $\tau_s$ is the cannibalism-dependent parameter, and $R_0$
-
-<p style="color:red">Alternatively, this can be formulated as:</p>
+Stanza-specific $\alpha$ and $\beta$ parameters are calculated as:
 
 \begin{equation}
-  \label{eq:11b}
-  M_{0,s} = \rho_s + \tau_s C
-\end{equation}
-
-and $C$ is the sum of animals in age classes where cannibalism may occur.
-
-
-
-```{r, eval=F, echo=F}
-
-### FROM HERE ON OUT: The asterisk notation needs to be checked.
-# WHAT IS GOING ON HERE?
-
-```
-
-
-
-\begin{equation}
-  \label{eq:12}
-    R = \frac{N_0 e^{-M_0}}{1 + \frac{M_1}{M_0} \left ( 1 - e^{-M_0} \right ) }
-\end{equation}
-
-
-
-
-
-
-**At higher abundances:**
-
-\begin{equation}
-  \label{eq:11}
-  M_{1,s} = \frac{\beta_s M_{0,s}}{1 - \alpha_s}
-\end{equation}
-
-
-In cases where cannibalism occurs in pre-recruit stanzas (i.e. $`p_cann`^{*} > 0$), maximum survival for each stanza is then also modified as a log-linear function of cannibal abundance (based on the reformulation of the Beverton-Holt model, see: [Walters and Korman, 1999](#refs):
-
-$e^{-M_0}$ is maximum survival at low spawning stock, and $\frac{M_1}{M_0}\left ( 1-e^{-M_0} \right )$ is the carrying capacity parameter.
-
-Users input which ages cannibalise and its effect with $\rho$, mortality independent of cannibalism; $\tau$, the cannibalism dependent parameter; and $C$, the sum of animals in age classes where cannibalism may occur.
-
-\begin{equation}
-  \label{eq:14}
-  \rho_s = M_{0, s} (1-p_{cann})
+  \label{eq:9}
+  \alpha_s = \frac{K}{\varphi_0} e^ {\left ( \frac{M_s^{\text{\text{*}}}}{\sum M_s^{\text{\text{*}}}} \right )}
 \end{equation}
 
 \begin{equation}
-  \label{eq:15}
-  \tau_s = M_{0,s} \frac{p_{cann}}{R_0 \sum_{a = cann_a}(lx_a spn_a)}}
+  \label{eq:10}
+  \beta_s = Bs^{\text{\text{*}}} \frac{K^{\text{\text{*}}}-1}{R0^{\text{\text{*}}}\varphi_0 \sum_{s'} \left ( \beta_{s'} \prod_{s''=0}^{s''=s'-1} \alpha_{s''}\right )}
 \end{equation}
 
 This results in a Ricker-like recruitment (e.g. overcompensation at high spawner abundance).
@@ -334,17 +333,17 @@ where $N^{i}$ indicates the numbers in initialization. The product of numbers-at
 
 \begin{equation}
   \label{eq:18}
-  M_1 = \frac {\left ( K^{*} - 1 \right ) ln \left( \frac{K^{*}}{\varphi_0} \right )}{R_0 \left( K^{*} - \varphi_0 \right ) }
+  M_1 = \frac {\left ( K^{\text{*}} - 1 \right ) ln \left( \frac{K^{\text{*}}}{\varphi_0} \right )}{R_0 \left( K^{\text{*}} - \varphi_0 \right ) }
 \end{equation}
 
 \begin{equation}
   \label{eq:19}
-  \rho = -ln \left ( \frac{K^{*}}{\varphi_0} \right ) \left ( 1 - p_{cann} \right )
+  \rho = -ln \left ( \frac{K^{\text{*}}}{\varphi_0} \right ) \left ( 1 - p_{cann} \right )
 \end{equation}
 
 \begin{equation}
   \label{eq:20}
-  \tau = -ln \left ( \frac{K^{*}}{\varphi_0} \right ) \frac{p_{cann}}{R_0 \sum_{a = cann_a} \left ( lx_a spn_a \right )}
+  \tau = -ln \left ( \frac{K^{\text{*}}}{\varphi_0} \right ) \frac{p_{cann}}{R_0 \sum_{a = cann_a} \left ( lx_a spn_a \right )}
 \end{equation}
 
 Equations 18-20 are stage-independent analogues to equations 11, 14, and 15.
@@ -449,13 +448,51 @@ For example, imagine a system where a gear is fished with one unit of effort at 
 
 Note that $q_N = \frac{\text{CPUE}}{N}$, and Equation 31 can be substituted into Equation 30 to give $q = 0.225$.
 
+`PVAInvadR` repeats these steps every timestep defined by the user for each iteration of the simulation.
 
-This entire procedure,
-# Running the model and use for decision support {#modelrun}
+#Running the model and use for decision support {#modelrun}
+
+When beginning a PVA session, the user can decide to consider one or multiple capture scenarios to control the invasive population following the calculations above.
+
+Briefly, here are the basic steps to comparing multiple control scenarios using `PVAInvadR` with more details below:
+
+1. Provide biological and control parameters to the model;
+2. (Optional) Supply these parameters to `PVA()` as the "base model";
+3. Define multiple control scenarios with `decision_setup()`;
+4. Compare these scenarios with `decision()`;
+5. Examine how well these scenarios perform when simulated under varying biological parameters with `rank_uncertainty()` (which assesses the impact of parameter uncertainty).
+
+## Upload parameters
+
+`PVAInvadR` requires two types of parameters: biological and control parameters ([described above with full list and definitions](#params)).
+
+These parameters are uploaded in a .csv file saved on your hard drive.
+You can start by downloading a template .csv that includes parameter names, a blank column to enter parameter values, and descriptions of these parameters.
+
+Download a template with `pva_template("FILE/PATH")`, where FILE/PATH is the location where your template should be saved.
+
+When filling out the template, a few formatting rules must be followed:
+
+- The number of stanzas influences how many pre-recruit parameters are needed. For example, if you are modelling a population with 5 stanzas, there must be 5 parameter values provided for each stanza-specific parameter (Ms, Bs, qR, ER, CFR, and CER). Put all parameter values in the same space, but separate them with a semicolon, ";"
+- Similarly, for each control gear, gear-specific parameters must be provided in a single .csv cell and separated with a semicolon, ";".
+
+[[IMAGE HERE]]
+- Any parameter where you would like to list multiple values (like cann_a, for example), these must again be separated with a ";".
+- Parameter names must stay the same as in the template - otherwise they will not be properly loaded by `PVAInvadR`.
+
+All parameters in the template must be provided *except* for initial age structure. This can be left blank and will be initialized by `PVAInvadR`. Control options should be relatively easy to define, but biological parameters may be more difficult to estimate. We suggest a literature survey, researching parameters for similar species,  or forming a good biological understanding of the species can help.
+
+Once you have filled in the PVA parameters and saved the values to a .csv file, upload this to your R session (after replacing `NEW/FILE/PATH` with the path to your filled .csv):
+
+```
+pva_params <- load_pva_parameters("NEW/FILE/PATH")
+```
+
+Now, `pva_params` contains a named list of parameters from your .csv. You can check the value of any parameter using R's `$`-notation (for example, to check the value for the proportion of cannibals, use `pva_params$p_can`). You can also do this to modify values in the R session (but note that this will not modify the source .csv and changes to PVA parameters may be lost).
 
 ## Evaluating a single removal strategy with `PVA`
 
-## Evaluating multiple removal stratgies with `decision`
+## Evaluating multiple removal strategies with `decision`
 
 ## Evaluating multiple removal strategies under biological uncertainty with `rank_uncertainty`
 
