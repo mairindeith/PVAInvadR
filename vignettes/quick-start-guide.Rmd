@@ -272,7 +272,8 @@ As `decision` runs, it will print which Scenario it is running and what control 
 ```{r decision, eval = F}
 dec <- decision(params,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
-  parallel = TRUE)
+  parallel = TRUE,
+  pretty = TRUE) # 
 ```
 
 ```{r decision_real, echo = F}

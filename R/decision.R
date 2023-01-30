@@ -11,6 +11,8 @@
 #' @param parallel (Optional), if TRUE decision simulations are run in parallel using  outputs are formatted with dollar signs and commas to "prettify")
 #' @param pretty (Optional), if TRUE decision outputs are formatted as in the shiny app, with comma delimiters and dollar signs.
 
+# require(PVAInvadR)
+
 decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_inits = NULL, sens_percent = NULL, direction = NULL, sens_params = NULL, parallel = F, pretty = F, quiet = F){ #, save_pva = F){
   if(is.null(decision_csv) && is.null(decision_list)){
     stop("decision() requires one of decision_csv (path to the filled in decision_csv file) or decision_list (a named list with modified parameters)")
@@ -118,6 +120,7 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
         param_num <- substr(col, start=regexpr("\\_[0-9]", col, fixed=F)+1, stop=nchar(col))
         scenParams[[param_shortname]][[as.numeric(param_num)]] <- as.numeric(decision_setup[sn_idx,c])
       }
+      # cat("PVA HERE...")
       pva <- PVAInvadR::PVA(params = scenParams, custom_inits = custom_inits, sens_percent = sens_percent, sens_params = sens_params, quiet = quiet)
       if(pretty==T){
         cost_1 <- format(pva$cost_1, big.mark=",", trim=TRUE)
@@ -170,3 +173,4 @@ decision <- function(params, decision_csv = NULL, decision_list = NULL, custom_i
   row.names(df) <- NULL
   return(df)
 }
+
