@@ -1,7 +1,11 @@
 ---
 title: "PVAInvadR Quick Start Guide"
 output: 
-  pdf_document:
+  rmarkdown::pdf_document:
+    highlight: zenburn
+    toc: yes
+    toc_depth: 3
+  rmarkdown::html_vignette:
     toc: true
     toc_depth: 3
 vignette: >
@@ -17,7 +21,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, echo = FALSE}
+```{r, include = FALSE}
 devtools::install_github("mairindeith/PVAInvadR")
 library(PVAInvadR)
 ```
@@ -164,11 +168,15 @@ Multi-value parameters (e.g. parameter ranges, or parameters specific to differe
 These parameters should be provided in stanza/gear order.
 
 Other parameters are input as ranges of values.
-These should be defined using the same format: `lower range; upper range`.
+These should be defined using the same format: 
+
+```lower range; upper range```
 
 Any parameters that expect `;`-separated parameter values will indicate this in the parameter's description.
 
-After filling in the csv, load it in to the R session using `load_pva_parameters`. Replace `PATH/TO/FILLED_TEMPLATE.csv` with the path to your now filled-in .csv template.
+After filling in the csv, load it in to the R session using `load_pva_parameters`. 
+
+Replace `PATH/TO/FILLED_TEMPLATE.csv` with the path to your now filled-in .csv template.
 
 ```{r loadparams, eval = F}
 params <- load_pva_parameters("PATH/TO/FILLED_TEMPLATE.csv")
@@ -235,19 +243,23 @@ _ScenarioB_ will also increase the effort to 10, and will also sample gear 1 at 
 Run `decision_setup`, select the parameters `E_A_1` and `t_start_A_1` to create a template .csv saved at `PATH/TO/DECISION_TEMPLATE.csv`.
 
 ```{r decsetup_csv, eval = F}
-decision_setup(params, scen_names = scenarios, csv = TRUE, csv_path = "PATH/TO/DECISION_TEMPLATE.csv")
+decision_setup(
+  params, 
+  scen_names = scenarios, 
+  csv = TRUE, 
+  csv_path = "PATH/TO/DECISION_TEMPLATE.csv")
 ```
 
 Select the modified parameters in the pop-up window.
 
-![decision_popup](img/gui.png)
+![Parameter selection during decision setup](img/gui.png){height=75%}
 
 Now, modify the .csv with each scenario's modified set of control parameters.
 The .csv created by `decision_setup` pre-sets each parameter to its current value in the original input dataset, so any value you do not have to modify can be left with its default value.
 
-![Values from the original input data (automatically created with `decision_setup`)](img/dec_setup_pre.png)
+![Values from the original input data (automatically created with `decision_setup`)](img/dec_setup_pre.png){width=75%}
 
-![Modified values for each `decision` scenario](img/dec_setup_post.png)
+![Modified values for each `decision` scenario](img/dec_setup_post.png){width=75%}
 
 The `decision` function will now simulate the defined scenarios and output a decision-support table with summary comparisons of scenarios.
 
@@ -260,22 +272,22 @@ As `decision` runs, it will print which Scenario it is running and what control 
 ```{r decision, eval = F}
 dec <- decision(params,
   decision_csv = "PATH/TO/DECISION_TEMPLATE.csv",
-  parallel = TRUE) # Turn off for a manipulatable data frame format
+  parallel = TRUE)
 ```
 
 ```{r decision_real, echo = F}
-dec <- decision(params, decision_csv = "dec_template.csv", parallel = TRUE, pretty = TRUE) # Turn off for a manipulatable data frame format
+# dec <- decision(params, decision_csv = "dec_template.csv", parallel = TRUE, pretty = TRUE) # Turn off for a manipulatable data frame format
+# saveRDS(dec, "DecisionSaver.rds")
+dec <- readRDS("DecisionSaver.rds")
 ```
 
 `decision` returns a summary data frame with multiple utility values: annual and total cost, probability of eradication, expected time for eradication, and median abundance across PVA simulations of each scenario.
 
 ```{r decision_out, echo = F}
-dec # Turn off for a manipulatable data frame format
+dec
 ```
 
-
-### These perform the same, change to a better parameter combo.
-
+**These perform about the same - still need to determine decisions/parameters that influence the inputs.**
 
 ## Step 4: Explore the consequences of biological parameter uncertainty
 
@@ -294,12 +306,16 @@ For now, let's turn this printing off by specifying `quiet = T`.
 `rank_uncertainty` may take up to a few minutes to run, depending on your computer's hardware (especially number of cores available to compare scenarios in parallel.
 
 ```{r rankuncertainty_dummy, eval = F}
-ru <- rank_uncertainty(params, decision_csv = "PATH/TO/DECISION_TEMPLATE.csv", parallel = TRUE, quiet = TRUE)
+ru <- rank_uncertainty(params, 
+  decision_csv = "PATH/TO/DECISION_TEMPLATE.csv", 
+  parallel = TRUE, 
+  quiet = TRUE)
 ```
 
 ```{r rankuncertainty_real, echo = F}
-ru <- rank_uncertainty(params, decision_csv = "dec_template.csv", parallel = TRUE)
-saveRDS(ru, "RankUncertaintySaver.rds")
+#ru <- rank_uncertainty(params, decision_csv = "dec_template.csv", parallel = TRUE)
+# saveRDS(ru, "RankUncertaintySaver.rds")
+ru <- readRDS("RankUncertaintySaver.rds")
 ```
 
 The output of `rank_uncertainty` is a named list with two entries: `sensitivity_plots` and `sensitivity_data`.
@@ -315,10 +331,10 @@ Both `sensitivity_plots` and `sensivity_data` contain 6 objects (plot objects al
 
 Data in these objects compare how each scenario performs compared to the default biological parameters (i.e. a rank difference of 1 indicates that the scenario ranks 1 higher than it did under the default conditions; an absolute difference of -12 indicates that the performance indicator is 12 units lower than the default case).
 
-For example, here's the absolute difference in population size:
+For example, here's the first few rows showing changes in the absolute difference of population size after modifying biological parameters:
   
 ```{r rankuncertainty_outdata}
-ru$sensitivity_data$nT_absolutediff
+head(ru$sensitivity_data$nT_absolutediff)
 ```
 
 Plots summarize the data in the `_data` object using a lollipop plot.
